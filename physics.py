@@ -272,18 +272,47 @@ class SobelFilter(object):
             return grad
 
 
-def constitutive_constraint(input, output, sobel_filter):
-    """sigma = - K * grad(u)
+def constitutive_constraint(input, output, sobel_filter: SobelFilter):
+    """see: https://documentation.pflotran.org/theory_guide/mode_th.html
+        steady-state so temporal derivatives = 0
 
     Args:
         input (Tensor): (1, 3, 65, 65)
         output (Tensor): (1, 1, 65, 65),
             three channels from 0-2: u, sigma_1, sigma_2
     """
+
+    source_mass = 0.0
+    source_energy = 0.0
+
+    # darcy flow
+    q_u = input[:, 0, :, :].unsqueeze(1)
+    q_v = input[:, 1, :, :].unsqueeze(1)
+
+    # water density
+    # water: 18.015 g/mol
+    # 0.9970474 g/ml at 25° -> /18.015 /1000 * 10^6 = 55.3454010547 kmol/m^3
+    molar_water_density = 55.3454010547
+
+    # divergence
+    mass_residual = (
+        molar_water_density * (sobel_filter.grad_h(q_u) + sobel_filter.grad_v(q_v))
+        - source_mass
+    )
+
+    # energy balance
     thermal_conductivity = 0.01
+    H = 1.0
+    balance_u = (
+        molar_water_density * q_u * H
+        - thermal_conductivity * sobel_filter.grad_h(output)
+    )
+    balance_v = (
+        molar_water_density * q_v * H
+        - thermal_conductivity * sobel_filter.grad_v(output)
+    )
+    energy_residual = (
+        sobel_filter.grad_h(balance_u) + sobel_filter.grad_v(balance_v) - source_energy
+    )
 
-    totalEnergy = thermal_conductivity * sobel_filter.grad_temp(
-        output
-    )  # Delta T in x direction
-
-    return (totalEnergy ** 2).mean()
+    return (mass_residual ** 2 + energy_residual ** 2).mean()

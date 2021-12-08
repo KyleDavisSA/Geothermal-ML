@@ -1,6 +1,7 @@
 import os
 
 from matplotlib.pyplot import plot
+from torch.utils.data.dataset import TensorDataset
 from torchvision.transforms.functional import InterpolationMode
 from torchvision.transforms.transforms import CenterCrop
 from data import MultiFolderDataset
@@ -22,8 +23,14 @@ import random
 data_path = "/import/sgs.local/scratch/leiterrl/Geothermal-ML/PFLOTRAN-Data/generated/SingleDirection"
 model_dir = "runs/run"
 
-folder_list = [os.path.join(data_path, f"batch{i+1}") for i in range(2, 7)]
-mf_dataset = MultiFolderDataset(folder_list)
+use_cache = True
+
+if not use_cache:
+    folder_list = [os.path.join(data_path, f"batch{i+1}") for i in range(2, 7)]
+    mf_dataset = MultiFolderDataset(folder_list)
+    torch.save(mf_dataset, "cache.pt")
+else:
+    mf_dataset = torch.load("cache.pt")
 
 train_size = int(0.8 * len(mf_dataset))
 test_size = len(mf_dataset) - train_size
@@ -47,7 +54,7 @@ test_data_loader = DataLoader(
 device = "cuda:0"
 
 timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-writer = SummaryWriter(model_dir + "_turbnet_rot_lr" + timestamp, flush_secs=10)
+writer = SummaryWriter(model_dir + "_turbnet_rot_lr_phys" + timestamp, flush_secs=10)
 
 # model = DenseED(
 #     in_channels=2,
@@ -67,7 +74,7 @@ model = TurbNetG(channelExponent=3)
 
 model.to(device)
 
-n_epochs = 6000 * 6 * 5
+n_epochs = 10000
 lr = 1e-3
 batch_size = 10
 optimizer = optim.Adam(model.parameters(), lr=lr)
@@ -116,9 +123,11 @@ for epoch in range(n_epochs):
         input.requires_grad = True
         optimizer.zero_grad()
         output = model(input)
-        loss = loss_fn(
-            output, target
-        )  # + constitutive_constraint(input, output, sobel_filter)
+
+        mse_loss = loss_fn(output, target)
+        res_loss = constitutive_constraint(input, output, sobel_filter)
+        loss = mse_loss + res_loss
+
         loss.backward()
         optimizer.step()
         scheduler.step()
@@ -144,6 +153,8 @@ for epoch in range(n_epochs):
         model.train()
 
     writer.add_scalar("loss", loss, epoch)
+    postfix_dict["dir"] = f"{mse_loss:.5f}"
+    postfix_dict["pde"] = f"{res_loss:.5f}"
     postfix_dict["loss"] = f"{loss:.5f}"
     postfix_dict["lr"] = f"{scheduler.get_last_lr()[0]:.5f}"
     progress_bar.set_postfix(postfix_dict)
