@@ -82,9 +82,9 @@ n_epochs = 10000
 lr = 1e-3
 batch_size = 10
 optimizer = optim.Adam(model.parameters(), lr=lr)
-scheduler = optim.lr_scheduler.OneCycleLR(
-    optimizer, max_lr=0.01, steps_per_epoch=len(train_data_loader), epochs=n_epochs
-)
+# scheduler = optim.lr_scheduler.OneCycleLR(
+#     optimizer, max_lr=0.01, steps_per_epoch=len(train_data_loader), epochs=n_epochs
+# )
 
 loss_fn = MSELoss()
 sobel_filter = SobelFilter(64, correct=True, device=device)
@@ -134,7 +134,7 @@ for epoch in range(n_epochs):
 
         loss.backward()
         optimizer.step()
-        scheduler.step()
+        # scheduler.step()
 
     if epoch % 100 == 0:
         model.eval()
@@ -160,6 +160,6 @@ for epoch in range(n_epochs):
     postfix_dict["dir"] = f"{mse_loss:.5f}"
     postfix_dict["pde"] = f"{res_loss:.5f}"
     postfix_dict["loss"] = f"{loss:.5f}"
-    postfix_dict["lr"] = f"{scheduler.get_last_lr()[0]:.5f}"
+    # postfix_dict["lr"] = f"{scheduler.get_last_lr()[0]:.5f}"
     progress_bar.set_postfix(postfix_dict)
     progress_bar.update(1)
