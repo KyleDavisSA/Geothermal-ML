@@ -277,17 +277,26 @@ def constitutive_constraint(input, output, sobel_filter: SobelFilter):
         steady-state so temporal derivatives = 0
 
     Args:
-        input (Tensor): (1, 3, 65, 65)
-        output (Tensor): (1, 1, 65, 65),
+        input (Tensor): (batch_size, 3, 65, 65)
+        output (Tensor): (batch_size, 1, 65, 65),
             three channels from 0-2: u, sigma_1, sigma_2
     """
 
+    # only diffusion: 20-40 W of energy source
     source_mass = 0.0
-    source_energy = 0.0
+    source_energy = 800.0
+
+    source_energy_img = torch.zeros_like(output)
+    source_energy_img[:, :, 31:32, 31:32] = source_energy / 4.0
+    source_mass_img = torch.zeros_like(output)
+    source_mass_img[:, :, 31:32, 31:32] = source_mass / 4.0
 
     # darcy flow
-    q_u = input[:, 0, :, :].unsqueeze(1)
-    q_v = input[:, 1, :, :].unsqueeze(1)
+    # m/day
+    # conv_factor = 1.0 / (24 * 60 * 60)
+    conv_factor = 1.0 / (24.0 * 60)
+    q_u = input[:, 0, :, :].unsqueeze(1) * conv_factor
+    q_v = input[:, 1, :, :].unsqueeze(1) * conv_factor
 
     # water density
     # water: 18.015 g/mol
@@ -297,22 +306,30 @@ def constitutive_constraint(input, output, sobel_filter: SobelFilter):
     # divergence
     mass_residual = (
         molar_water_density * (sobel_filter.grad_h(q_u) + sobel_filter.grad_v(q_v))
-        - source_mass
+        - source_mass_img
     )
 
     # energy balance
-    thermal_conductivity = 0.01
-    H = 1.0
-    balance_u = (
-        molar_water_density * q_u * H
-        - thermal_conductivity * sobel_filter.grad_h(output)
-    )
-    balance_v = (
-        molar_water_density * q_v * H
-        - thermal_conductivity * sobel_filter.grad_v(output)
-    )
-    energy_residual = (
-        sobel_filter.grad_h(balance_u) + sobel_filter.grad_v(balance_v) - source_energy
-    )
+    thermal_conductivity = 0.5
+    H = 1000.0
+
+    diffusion = thermal_conductivity * sobel_filter.grad_temp(output)
+
+    advection_u = sobel_filter.grad_h(molar_water_density * q_u * H)
+    advection_v = sobel_filter.grad_v(molar_water_density * q_v * H)
+
+    # balance_u = (
+    #     molar_water_density * q_u * H
+    #     - thermal_conductivity * sobel_filter.grad_h(output)
+    # )
+    # balance_v = (
+    #     molar_water_density * q_v * H
+    #     - thermal_conductivity * sobel_filter.grad_v(output)
+    # )
+    # energy_residual = (
+    #     sobel_filter.grad_h(balance_u) + sobel_filter.grad_v(balance_v) - source_energy
+    # )
+    energy_residual = advection_u + advection_v - diffusion - source_energy_img
 
     return (mass_residual ** 2 + energy_residual ** 2).mean()
+    # return ((diffusion - source_energy_img) ** 2).mean()
