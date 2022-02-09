@@ -6,7 +6,7 @@ from random import randint
 
 
 def plot_temperature_ax(ax, temp):
-    return ax.imshow(temp, origin="lower", vmin=0.0, vmax=5.0)
+    return ax.imshow(temp, origin="lower", vmin=-5.0, vmax=5.0)
 
 
 def plot_velocity_temperature_ax(ax, vel, temp, imsize: int = 64):
