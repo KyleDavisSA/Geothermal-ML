@@ -78,9 +78,15 @@ model = TurbNetG(channelExponent=3)
 
 model.to(device)
 
+# PARAMETERS
+lra = False
+data_augmentation = False
 n_epochs = 10000
 lr = 1e-3
 batch_size = 10
+res_loss_weight = 0.001
+lra_alpha = 0.9
+
 optimizer = optim.Adam(model.parameters(), lr=lr)
 # scheduler = optim.lr_scheduler.OneCycleLR(
 #     optimizer, max_lr=0.01, steps_per_epoch=len(train_data_loader), epochs=n_epochs
@@ -115,33 +121,70 @@ def augment_data(input, target):
     return input, target
 
 
+def compute_loss_grads(network: torch.nn.Module, loss: torch.Tensor):
+    loss.backward(retain_graph=True)
+    grads = []
+    for param in network.parameters():
+        if param.grad is not None:
+            grads.append(torch.flatten(param.grad))
+    return torch.cat(grads).clone()
+
+
 loss = 0
+iteration = 0
+
+
 for epoch in range(n_epochs):
     for batch_idx, sample in enumerate(train_data_loader):
         # sample = sample.to(device)
         input = sample[0].to(device)
         target = sample[1].to(device)
-        input, target = augment_data(input, target)
+        if data_augmentation:
+            input, target = augment_data(input, target)
+
+        input.requires_grad = True
+
+        # Learning Rate Annealing
+        if lra and iteration % 10 == 0 and iteration > 1:
+            optimizer.zero_grad()
+            output = model(input)
+            mse_loss = loss_fn(output, target)
+            res_loss = constitutive_constraint(input, output, sobel_filter)
+
+            optimizer.zero_grad()
+            mse_loss_grad = compute_loss_grads(model, mse_loss)
+            optimizer.zero_grad()
+            res_loss_grad = compute_loss_grads(model, res_loss)
+
+            # TODO: this is bad to assume i guess...
+            first_loss_max_grad = torch.max(torch.abs(mse_loss_grad))
+            update = first_loss_max_grad / torch.mean(torch.abs(res_loss_grad))
+            res_loss_weight = (1.0 - lra_alpha) * res_loss_weight + lra_alpha * update
+            writer.add_scalar("res_weight", res_loss_weight, epoch)
 
         # model.zero_grad()
-        input.requires_grad = True
-        optimizer.zero_grad()
         output = model(input)
 
         mse_loss = loss_fn(output, target)
         res_loss = constitutive_constraint(input, output, sobel_filter)
-        loss = mse_loss + res_loss
+        # res_loss = 0
+        loss = mse_loss + res_loss_weight * res_loss
+        # loss = res_loss
+        # loss = mse_loss
 
+        optimizer.zero_grad()
         loss.backward()
         optimizer.step()
         # scheduler.step()
+        iteration += 1
 
-    if epoch % 100 == 0:
+    if epoch % 1000 == 0:
         model.eval()
         for test_batch_idx, test_sample in enumerate(test_data_loader):
             test_input = test_sample[0].to(device)
             test_target = test_sample[1].to(device)
-            test_input, test_target = augment_data(test_input, test_target)
+            if data_augmentation:
+                test_input, test_target = augment_data(test_input, test_target)
 
             test_output = model(test_input)
             test_loss = loss_fn(test_output, test_target)
