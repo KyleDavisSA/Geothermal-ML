@@ -20,13 +20,17 @@ import torch
 import numpy as np
 import random
 
-data_path = "/import/sgs.local/scratch/leiterrl/Geothermal-ML/PFLOTRAN-Data/generated/SingleDirection"
+# data_path = "/import/sgs.local/scratch/leiterrl/Geothermal-ML/PFLOTRAN-Data/generated/SingleDirection"
+data_path = (
+    "/import/sgs.local/scratch/leiterrl/Geothermal-ML/PFLOTRAN-Data/noFlow_withFlow"
+)
+
 model_dir = "runs/run"
 
 use_cache = True
 
 if not use_cache:
-    folder_list = [os.path.join(data_path, f"batch{i+1}") for i in range(2, 7)]
+    folder_list = [os.path.join(data_path, f"batch{i+1}") for i in range(2)]
     mf_dataset = MultiFolderDataset(folder_list)
     torch.save(mf_dataset, "cache.pt")
 else:

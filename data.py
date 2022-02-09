@@ -12,7 +12,8 @@ class MultiFolderDataset(Dataset):
         eligible_files: "list[str]" = []
         for folder in folder_list:
             for data_file in sorted(os.listdir(folder)):
-                if "pflotran-new-vel-" in data_file:
+                # if "pflotran-new-vel-" in data_file:
+                if "pflotran-noFlow-new-vel-" in data_file:
                     eligible_files.append(os.path.join(folder, data_file))
                     self.dataset_size += 1
                     print(self.dataset_size)
@@ -37,7 +38,10 @@ class MultiFolderDataset(Dataset):
         """loads mesh and tmeperature data from vtk file
         expects file path including "vel" part
         """
-        file_path = file_path_vel.replace("pflotran-new-vel-", "pflotran-new-")
+        # file_path = file_path_vel.replace("pflotran-new-vel-", "pflotran-new-")
+        file_path = file_path_vel.replace(
+            "pflotran-noFlow-new-vel", "pflotran-withFlow-new"
+        )
         mesh = meshio.read(file_path_vel)
         data = meshio.read(file_path)
 
