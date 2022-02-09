@@ -61,6 +61,13 @@ Address \\
 \end{abstract}
 
 \section{Introduction}
+- general motivation (large scale heatpump adoption requires optimization of placements etc.)
+
+- geokw project outline (possibly de-anonymizing?)
+
+- specific application in web-based real-time context -> requires fast online evaluation
+
+- related work (TurbNet etc.)
 
 \section{Theory}
 
@@ -76,6 +83,8 @@ Energy conservation
    \nabla \cdot \left(\eta \vq H\right) - \kappa \Delta T = Q_e
 \end{equation}
 
+with energy source term $Q_e$ in $MW/m^2$ as well as mass source term $Q_w$ in $kmol\, m^{-3} s^{-1}$ and darcy flux $\vq$ in $m/s$
+
 \begin{tabular}{| c | c | c |}
    \hline
    $\eta$   & molar density        & $55.3454010547$ $kmol/m^3$ \\
@@ -87,10 +96,26 @@ Energy conservation
 \end{tabular}
 
 \section{Model}
+- CNN
+
+- TurbNet Architecture
+
+- Data augmentation? 
 
 \section{Experiments}
+- Data description
+
+- Data generation (using PFLOTRAN)
+
+- model setup
+
+- evaluation (error on test set, inference time)
+
+- overlay of local surrogates on city map (?)
 
 \section{Conclusion}
+
+- future work: overlapping local predictions -> resolve with global city-wide model
 
 \section{Submission of conference papers to ICLR 2022}
 
