@@ -62,21 +62,34 @@ Address \\
 
 \section{Introduction}
 - general motivation (large scale heatpump adoption requires optimization of placements etc.)
+\begin{enumerate}
+\item The large scale roll-out of shallow groundwater heat pumps often results in thermal interference of the installed heat pumps.
+\item This requires optimization of placement and usage of heat pumps to manage the subsurface thermal resource.
+\item Current analytical formulas are too simplistic.
+\end{enumerate}
 
-- geokw project outline (possibly de-anonymizing?)
+- geokw project outline (possibly de-anonymizing?) \\
+KD: We can remove GeoKW and I can explain the project. The web-app isnt live so they wouldn't be able to find it.
 
 - specific application in web-based real-time context -> requires fast online evaluation
+\begin{enumerate}
+\item Specific application is the optimization, as this is crazy expensive. Try to reduce computational time of the optimization.
+\item Second application is a web-based planning tool, which gives energy planners an easy tool to assess compatability.
+\end{enumerate}
 
 - related work (TurbNet etc.)
 
+
 \section{Theory}
 
-Stationary Equations (Richards)
+Stationary Equations (Richards):
 
 Mass conservation
 \begin{equation}
    \nabla \cdot \left(\eta \vq \right) = Q_w
 \end{equation}
+
+Thermal-Hydraulic:
 
 Energy conservation
 \begin{equation}
@@ -89,9 +102,9 @@ with energy source term $Q_e$ in $MW/m^2$ as well as mass source term $Q_w$ in $
    \hline
    $\eta$   & molar density        & $55.3454010547$ $kmol/m^3$ \\
    \hline
-   $\kappa$ & thermal conductivity & $0.5$ ??                   \\
+   $\kappa$ & thermal conductivity & $0.5$ $W/(m \cdot K)$                   \\
    \hline
-   H        & enthalpy             & $1000$ ??                  \\
+   H        & enthalpy             & $1000$ $J/(K \cdot kg)$                  \\
    \hline
 \end{tabular}
 
@@ -106,6 +119,10 @@ with energy source term $Q_e$ in $MW/m^2$ as well as mass source term $Q_w$ in $
 - Data description
 
 - Data generation (using PFLOTRAN)
+\begin{enumerate}
+\item Randomly generate permeability fields and pressure boundaries to generate velocity fields.
+\item Simulate this with added heat flux to determine temperatures
+\end{enumerate}
 
 - model setup
 
@@ -116,6 +133,8 @@ with energy source term $Q_e$ in $MW/m^2$ as well as mass source term $Q_w$ in $
 \section{Conclusion}
 
 - future work: overlapping local predictions -> resolve with global city-wide model
+
+- Web app currently uses analytical formulas. Want to add this as it uses non-uniform velocities.
 
 \section{Submission of conference papers to ICLR 2022}
 
