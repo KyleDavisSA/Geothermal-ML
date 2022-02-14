@@ -1,16 +1,14 @@
 import os
 
-from matplotlib.pyplot import plot
-from torch.utils.data.dataset import TensorDataset
 from torchvision.transforms.functional import InterpolationMode
 from torchvision.transforms.transforms import CenterCrop
 from data import MultiFolderDataset
 from physics import SobelFilter, constitutive_constraint
-from unet import TurbNetG, UNet
+from unet import TurbNetG, UNet, weights_init
 from models import DenseED
 from torch import optim
 from torch.utils.data import DataLoader, random_split
-from torch.nn import MSELoss
+from torch.nn import MSELoss, L1Loss
 from tqdm import tqdm
 from torch.utils.tensorboard.writer import SummaryWriter
 from datetime import datetime
@@ -20,190 +18,285 @@ import torch
 import numpy as np
 import random
 
+from torch.utils.data.distributed import DistributedSampler
+from torch.nn.parallel import DistributedDataParallel as DDP
+
 from utils import *
-# data_path = "/import/sgs.local/scratch/leiterrl/Geothermal-ML/PFLOTRAN-Data/generated/SingleDirection"
-data_path = (
-    "/import/sgs.local/scratch/leiterrl/Geothermal-ML/PFLOTRAN-Data/noFlow_withFlow"
-)
 
-model_dir = "runs/run"
-
+# model_dir = "runs/run"
+model_dir = "/data/scratch/leiterrl/geoml"
+cache_dir = "/data/scratch/leiterrl/"
 use_cache = True
-
-if not use_cache:
-    folder_list = [os.path.join(data_path, f"batch{i+1}") for i in range(2)]
-    mf_dataset = MultiFolderDataset(folder_list)
-    torch.save(mf_dataset, "cache.pt")
-else:
-    mf_dataset = torch.load("cache.pt")
-
-train_size = int(0.8 * len(mf_dataset))
-test_size = len(mf_dataset) - train_size
-train_dataset, test_dataset = random_split(mf_dataset, [train_size, test_size])
-
-rand_rot_trans = RandomRotation(180, interpolation=InterpolationMode.BILINEAR)
-crop_trans = CenterCrop(45)
-resize_trans = Resize((64, 64))
-trans = Compose([rand_rot_trans, crop_trans, resize_trans])
-
-print(f"Total Length: {len(mf_dataset)}")
-print(f"Test size: {len(test_dataset)}")
-
-train_data_loader = DataLoader(
-    train_dataset, batch_size=64, shuffle=True, pin_memory=True
-)
-test_data_loader = DataLoader(
-    test_dataset, batch_size=len(test_dataset), shuffle=True, pin_memory=True
-)
-
-device = "cuda:0"
-
-timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-writer = SummaryWriter(model_dir + "_turbnet_rot_lr_phys" + timestamp, flush_secs=10)
-
-# model = DenseED(
-#     in_channels=2,
-#     out_channels=1,
-#     imsize=64,
-#     blocks=[3, 4, 3],
-#     growth_rate=24,
-#     init_features=32,
-#     drop_rate=0.2,
-#     out_activation=None,
-#     upsample="nearest",
-# )
-
-# model = UNet(in_channels=2, out_channels=1)
-
-model = TurbNetG(channelExponent=3)
-
-model.to(device)
-
-# PARAMETERS
-lra = False
-data_augmentation = False
-n_epochs = 10000
-lr = 1e-3
-batch_size = 10
-res_loss_weight = 0.001
-lra_alpha = 0.9
-
-optimizer = optim.Adam(model.parameters(), lr=lr)
-# scheduler = optim.lr_scheduler.OneCycleLR(
-#     optimizer, max_lr=0.01, steps_per_epoch=len(train_data_loader), epochs=n_epochs
-# )
-
-loss_fn = MSELoss()
-sobel_filter = SobelFilter(64, correct=True, device=device)
-
-postfix_dict = {
-    "loss": "",
-    "t_loss": "",
-    "lr": "NaN",
-    "pde": "NaN",
-    "dir": "NaN",
-    "neu": "NaN",
-}
-progress_bar = tqdm(desc="Epoch: ", total=n_epochs, postfix=postfix_dict, delay=0.5)
-
-# writer.add_graph(model)
+distributed_training = True
 
 
 def augment_data(input, target):
     seed = np.random.randint(2147483647)  # make a seed with numpy generator
     random.seed(seed)  # apply this seed to img tranfsorms
     torch.manual_seed(seed)  # needed for torchvision 0.7
-    input = trans(input)
+    # input = trans(input)
 
     random.seed(seed)  # apply this seed to target tranfsorms
     torch.manual_seed(seed)  # needed for torchvision 0.7
-    target = trans(target)
+    # target = trans(target)
 
     return input, target
 
 
-def compute_loss_grads(network: torch.nn.Module, loss: torch.Tensor):
-    loss.backward(retain_graph=True)
-    grads = []
-    for param in network.parameters():
-        if param.grad is not None:
-            grads.append(torch.flatten(param.grad))
-    return torch.cat(grads).clone()
+# data_path = "/import/sgs.local/scratch/leiterrl/Geothermal-ML/PFLOTRAN-Data/generated/SingleDirection"
+data_path = (
+    "/import/sgs.local/scratch/leiterrl/Geothermal-ML/PFLOTRAN-Data/noFlow_withFlow"
+)
 
 
-loss = 0
-iteration = 0
+if not use_cache:
+    folder_list = [os.path.join(data_path, f"batch{i+1}") for i in range(2)]
+    mf_dataset = MultiFolderDataset(folder_list, data_augmentation=True)
+    torch.save(mf_dataset, cache_dir + "cache.pt")
+else:
+    mf_dataset = torch.load(cache_dir + "cache.pt")
+
+train_size = int(0.8 * len(mf_dataset))
+test_size = len(mf_dataset) - train_size
+train_dataset, test_dataset = random_split(mf_dataset, [train_size, test_size])
 
 
-for epoch in range(n_epochs):
-    for batch_idx, sample in enumerate(train_data_loader):
-        # sample = sample.to(device)
-        input = sample[0].to(device)
-        target = sample[1].to(device)
-        if data_augmentation:
-            input, target = augment_data(input, target)
+def run_epoch(rank, world_size):
+    if distributed_training:
+        print(f"Running DDP example on rank {rank}.")
+        setup(rank, world_size)
 
-        input.requires_grad = True
+    rand_rot_trans = RandomRotation(180, interpolation=InterpolationMode.BILINEAR)
+    crop_trans = CenterCrop(45)
+    resize_trans = Resize((64, 64))
+    trans = Compose([rand_rot_trans, crop_trans, resize_trans])
 
-        # Learning Rate Annealing
-        if lra and iteration % 10 == 0 and iteration > 1:
-            optimizer.zero_grad()
-            output = model(input)
-            mse_loss = loss_fn(output, target)
-            res_loss = constitutive_constraint(input, output, sobel_filter)
+    print(f"Total Length: {len(mf_dataset)}")
+    print(f"Test size: {len(test_dataset)}")
 
-            optimizer.zero_grad()
-            mse_loss_grad = compute_loss_grads(model, mse_loss)
-            optimizer.zero_grad()
-            res_loss_grad = compute_loss_grads(model, res_loss)
-
-            # TODO: this is bad to assume i guess...
-            first_loss_max_grad = torch.max(torch.abs(mse_loss_grad))
-            update = first_loss_max_grad / torch.mean(torch.abs(res_loss_grad))
-            res_loss_weight = (1.0 - lra_alpha) * res_loss_weight + lra_alpha * update
-            writer.add_scalar("res_weight", res_loss_weight, epoch)
-
-        # model.zero_grad()
-        output = model(input)
-
-        mse_loss = loss_fn(output, target)
-        res_loss = constitutive_constraint(input, output, sobel_filter)
-        # res_loss = 0
-        loss = mse_loss + res_loss_weight * res_loss
-        # loss = res_loss
-        # loss = mse_loss
-
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        # scheduler.step()
-        iteration += 1
-
-    if epoch % 1000 == 0:
-        model.eval()
-        for test_batch_idx, test_sample in enumerate(test_data_loader):
-            test_input = test_sample[0].to(device)
-            test_target = test_sample[1].to(device)
-            if data_augmentation:
-                test_input, test_target = augment_data(test_input, test_target)
-
-            test_output = model(test_input)
-            test_loss = loss_fn(test_output, test_target)
-
-        postfix_dict["t_loss"] = f"{test_loss:.5f}"
-        writer.add_scalar("test_loss", test_loss, epoch)
-        writer.add_figure(
-            "comp",
-            plot_multi_comparison(test_input, test_output, test_target),
-            epoch,
+    if distributed_training:
+        sampler_train = DistributedSampler(
+            train_dataset,
+            num_replicas=world_size,
+            rank=rank,
+            shuffle=False,
+            drop_last=False,
         )
 
-        model.train()
+        sampler_test = DistributedSampler(
+            test_dataset,
+            num_replicas=world_size,
+            rank=rank,
+            shuffle=False,
+            drop_last=False,
+        )
+    else:
+        sampler_train = None
+        sampler_test = None
 
-    writer.add_scalar("loss", loss, epoch)
-    postfix_dict["dir"] = f"{mse_loss:.5f}"
-    postfix_dict["pde"] = f"{res_loss:.5f}"
-    postfix_dict["loss"] = f"{loss:.5f}"
-    # postfix_dict["lr"] = f"{scheduler.get_last_lr()[0]:.5f}"
-    progress_bar.set_postfix(postfix_dict)
-    progress_bar.update(1)
+    batch_size = 1024
+
+    train_data_loader = DataLoader(
+        train_dataset,
+        batch_size=batch_size,
+        # shuffle=True,
+        pin_memory=True,
+        sampler=sampler_train,
+    )
+    test_data_loader = DataLoader(
+        test_dataset,
+        batch_size=len(test_dataset),
+        # shuffle=True,
+        pin_memory=True,
+        sampler=sampler_test,
+    )
+
+    # def prepare(rank, world_size, batch_size=32, pin_memory=False, num_workers=0):
+
+    # dataloader = DataLoader(
+    #     dataset,
+    #     batch_size=batch_size,
+    #     pin_memory=pin_memory,
+    #     num_workers=num_workers,
+    #     drop_last=False,
+    #     shuffle=False,
+    #     sampler=sampler,
+    # )
+
+    # return dataloader
+
+    # device = "cuda:0"
+
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    writer = SummaryWriter(
+        model_dir + "_turbnet_rot_lr_phys" + timestamp, flush_secs=10
+    )
+
+    # model = DenseED(
+    #     in_channels=2,
+    #     out_channels=1,
+    #     imsize=64,
+    #     blocks=[3, 4, 3],
+    #     growth_rate=24,
+    #     init_features=32,
+    #     drop_rate=0.2,
+    #     out_activation=None,
+    #     upsample="nearest",
+    # )
+
+    # model = UNet(in_channels=2, out_channels=1)
+
+    # PARAMETERS
+    lra = False
+    data_augmentation = False
+    n_epochs = 100000
+    lr = 1e-3
+    res_loss_weight = 0.001
+    # res_loss_weight = 1.0
+    lra_alpha = 0.9
+    channelExponent = 5
+
+    model = TurbNetG(channelExponent=channelExponent)
+    model.to(rank)
+    if distributed_training:
+        model = DDP(model, device_ids=[rank])
+    # print(model)
+    model_parameters = filter(lambda p: p.requires_grad, model.parameters())
+    params = sum([np.prod(p.size()) for p in model_parameters])
+    print("Initialized TurbNet with {} trainable params ".format(params))
+
+    model.apply(weights_init)
+
+    optimizer = optim.Adam(model.parameters(), lr=lr)
+    # scheduler = optim.lr_scheduler.OneCycleLR(
+    #     optimizer, max_lr=0.01, steps_per_epoch=len(train_data_loader), epochs=n_epochs
+    # )
+
+    loss_fn = MSELoss()
+    # loss_fn = L1Loss()
+    sobel_filter = SobelFilter(64, correct=True, device=rank)
+
+    postfix_dict = {
+        "loss": "",
+        "t_loss": "",
+        "lr": "NaN",
+        "pde": "NaN",
+        "dir": "NaN",
+        "neu": "NaN",
+    }
+
+    if rank == 0 or not distributed_training:
+        progress_bar = tqdm(
+            desc="Epoch: ", total=n_epochs, postfix=postfix_dict, delay=0.5
+        )
+    else:
+        progress_bar = None
+
+    # writer.add_graph(model)
+
+    loss = 0
+    iteration = 0
+
+    for epoch in range(n_epochs):
+        if distributed_training:
+            sampler_train.set_epoch(epoch)
+            sampler_test.set_epoch(epoch)
+        for batch_idx, sample in enumerate(train_data_loader):
+            # sample = sample.to(device)
+            input = sample[0].to(rank)
+            target = sample[1].to(rank)
+            if data_augmentation:
+                input, target = augment_data(input, target)
+
+            input.requires_grad = True
+
+            # Learning Rate Annealing
+            if lra and iteration % 10 == 0 and iteration > 1:
+                optimizer.zero_grad()
+                output = model(input)
+                mse_loss = loss_fn(output, target)
+                res_loss = constitutive_constraint(input, output, sobel_filter)
+
+                optimizer.zero_grad()
+                mse_loss_grad = compute_loss_grads(model, mse_loss)
+                optimizer.zero_grad()
+                res_loss_grad = compute_loss_grads(model, res_loss)
+
+                # TODO: this is bad to assume i guess...
+                first_loss_max_grad = torch.max(torch.abs(mse_loss_grad))
+                update = first_loss_max_grad / torch.mean(torch.abs(res_loss_grad))
+                res_loss_weight = (
+                    1.0 - lra_alpha
+                ) * res_loss_weight + lra_alpha * update
+                writer.add_scalar("res_weight", res_loss_weight, epoch)
+
+            # model.zero_grad()
+            output = model(input)
+
+            mse_loss = loss_fn(output, target)
+            res_loss = constitutive_constraint(input, output, sobel_filter)
+            # res_loss = 0
+            loss = mse_loss + res_loss_weight * res_loss
+            # loss = res_loss
+            # loss = mse_loss
+
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+            # scheduler.step()
+            iteration += 1
+
+        if epoch % 1000 == 0:
+            model.eval()
+            for test_batch_idx, test_sample in enumerate(test_data_loader):
+                test_input = test_sample[0].to(rank)
+                test_target = test_sample[1].to(rank)
+                if data_augmentation:
+                    test_input, test_target = augment_data(test_input, test_target)
+
+                test_output = model(test_input)
+                test_loss = loss_fn(test_output, test_target)
+            if rank == 0 or not distributed_training:
+                postfix_dict["t_loss"] = f"{test_loss:.5f}"
+                writer.add_scalar("test_loss", test_loss, epoch)
+                writer.add_figure(
+                    "comp",
+                    plot_multi_comparison(test_input, test_output, test_target),
+                    epoch,
+                )
+
+            model.train()
+
+            if rank == 0 or not distributed_training:
+                torch.save(
+                    {
+                        "epoch": epoch,
+                        "model_state_dict": model.state_dict(),
+                        "optim_state_dict": optimizer.state_dict(),
+                        "loss": loss,
+                        "test_loss": test_loss,
+                    },
+                    model_dir,
+                )
+
+        if (rank == 0 or not distributed_training) and progress_bar:
+            writer.add_scalar("loss", loss, epoch)
+            postfix_dict["dir"] = f"{mse_loss:.5f}"
+            # postfix_dict["pde"] = f"{res_loss:.5f}"
+            postfix_dict["loss"] = f"{loss:.5f}"
+            # postfix_dict["lr"] = f"{scheduler.get_last_lr()[0]:.5f}"
+            progress_bar.set_postfix(postfix_dict)
+            progress_bar.update(1)
+
+    if distributed_training:
+        cleanup()
+
+
+if __name__ == "__main__":
+    if distributed_training:
+        n_gpus = torch.cuda.device_count()
+        assert n_gpus >= 2, f"Requires at least 2 GPUs to run, but got {n_gpus}"
+        world_size = n_gpus
+        run_parallel(run_epoch, world_size)
+    else:
+        run_epoch("cuda:0", 1)
