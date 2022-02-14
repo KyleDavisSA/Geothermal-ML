@@ -7,6 +7,7 @@
 
 \usepackage{hyperref}
 \usepackage{url}
+\usepackage{graphicx}
 
 
 \title{Formatting Instructions for ICLR 2022 \\ Conference Submissions}
@@ -61,10 +62,33 @@ Address \\
 \end{abstract}
 
 \section{Introduction}
+- general motivation (large scale heatpump adoption requires optimization of placements etc.)
 
-\section{Theory}
+- geokw project outline (possibly de-anonymizing?)
 
-Stationary Equations (Richards)
+- specific application in web-based real-time context -> requires fast online evaluation
+
+- related work (TurbNet etc.)
+
+\section{Method}
+
+- to train fast surrogate we need data
+- data is generated using FV solver pflotran for different configurations
+- generate arbitrary configurations with smooth random flow fields
+- injection in the middle of the domain leads to some temperature plume
+- we solve a bunch of these until a quasi-stationary state is achieved
+
+- as surrogate we use a TurbNet structure
+\begin{figure}[htb]
+   \centering
+   \includegraphics[width=9cm]{example-image-a}
+\end{figure}
+
+- network description here
+- this allows us to directly predict stationary temperature plume for a given flow field
+- this surrogate can then be used in a real-time setting to make predictions for the website user
+
+- underlying equations are the (stationary) Richards flow equations
 
 Mass conservation
 \begin{equation}
@@ -76,21 +100,48 @@ Energy conservation
    \nabla \cdot \left(\eta \vq H\right) - \kappa \Delta T = Q_e
 \end{equation}
 
+with energy source term $Q_e$ in $MW/m^2$ as well as mass source term $Q_w$ in $kmol\, m^{-3} s^{-1}$ and darcy flux $\vq$ in $m/s$
+
 \begin{tabular}{| c | c | c |}
    \hline
    $\eta$   & molar density        & $55.3454010547$ $kmol/m^3$ \\
    \hline
-   $\kappa$ & thermal conductivity & $0.5$ ??                   \\
+   $\kappa$ & thermal conductivity & $0.5 W/(mK)$                   \\
    \hline
-   H        & enthalpy             & $1000$ ??                  \\
+   H        & specific enthalpy of water             & $1.134945 kJ/mol$                  \\
    \hline
 \end{tabular}
 
-\section{Model}
+- using these we can additionally regularize the network during training
+- makes sure that physically plausible solutions are found
+- comparison with and without physical term (speeds up training?)
+
+% \section{Model}
+- CNN
+
+- TurbNet Architecture
+
+- Data augmentation? 
 
 \section{Experiments}
+- Data description
+
+- Data generation (using PFLOTRAN)
+
+- model setup
+\begin{figure}
+   \centering
+   \includegraphics[width=5cm]{example-image-a}
+   \caption{Example visualization of a single data sample. Streamlines represent the darcy flow velocity overlay over a plot of the temperature.}
+\end{figure}
+
+- evaluation (error on test set, inference time)
+
+- overlay of local surrogates on city map (?)
 
 \section{Conclusion}
+
+- future work: overlapping local predictions -> resolve with global city-wide model
 
 \section{Submission of conference papers to ICLR 2022}
 
