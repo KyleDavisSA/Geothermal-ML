@@ -20,6 +20,7 @@ import torch
 import numpy as np
 import random
 
+from utils import *
 # data_path = "/import/sgs.local/scratch/leiterrl/Geothermal-ML/PFLOTRAN-Data/generated/SingleDirection"
 data_path = (
     "/import/sgs.local/scratch/leiterrl/Geothermal-ML/PFLOTRAN-Data/noFlow_withFlow"
