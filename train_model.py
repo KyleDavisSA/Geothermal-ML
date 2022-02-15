@@ -24,7 +24,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from utils import *
 
 # model_dir = "runs/run"
-model_dir = "/data/scratch/leiterrl/geoml"
+base_dir = "/data/scratch/leiterrl/geoml"
 cache_dir = "/data/scratch/leiterrl/"
 use_cache = True
 distributed_training = True
@@ -128,9 +128,8 @@ def run_epoch(rank, world_size):
     # device = "cuda:0"
 
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    writer = SummaryWriter(
-        model_dir + "_turbnet_rot_lr_phys" + timestamp, flush_secs=10
-    )
+    model_dir = base_dir + "_turbnet_rot_lr_phys" + timestamp
+    writer = SummaryWriter(model_dir, flush_secs=10)
 
     # model = DenseED(
     #     in_channels=2,
@@ -276,7 +275,7 @@ def run_epoch(rank, world_size):
                         "loss": loss,
                         "test_loss": test_loss,
                     },
-                    model_dir,
+                    model_dir + "/model.pt",
                 )
 
         if (rank == 0 or not distributed_training) and progress_bar:
