@@ -270,7 +270,7 @@ def run_epoch(rank, world_size):
                 torch.save(
                     {
                         "epoch": epoch,
-                        "model_state_dict": model.state_dict(),
+                        "model_state_dict": model.module.state_dict() if distributed_training else model.module.state_dict(),
                         "optim_state_dict": optimizer.state_dict(),
                         "loss": loss,
                         "test_loss": test_loss,
