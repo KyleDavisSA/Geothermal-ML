@@ -22,3 +22,344 @@ volume={1},
 year={2016},
 publisher={MIT Press}
 }
+
+@ARTICLE{nn_pde1,  author={I. E. {Lagaris} and A. {Likas} and D. I. {Fotiadis}},  journal={IEEE Transactions on Neural Networks},   title={Artificial neural networks for solving ordinary and partial differential equations},   year={1998},  volume={9},number={5},  pages={987-1000},  doi={10.1109/72.712178}}
+
+@article{nn_pde2,
+author = {Psichogios, Dimitris C. and Ungar, Lyle H.},
+title = {A hybrid neural network-first principles approach to process modeling},
+journal = {AIChE Journal},
+volume = {38},
+number = {10},
+pages = {1499-1511},
+doi = {https://doi.org/10.1002/aic.690381003},
+url = {https://aiche.onlinelibrary.wiley.com/doi/abs/10.1002/aic.690381003},
+eprint = {https://aiche.onlinelibrary.wiley.com/doi/pdf/10.1002/aic.690381003},
+year = {1992}
+}
+
+@inproceedings{nn_pde_cfdnet,
+author = {Obiols-Sales, Octavi and Vishnu, Abhinav and Malaya, Nicholas and Chandramowliswharan, Aparna},
+title = {CFDNet: A Deep Learning-Based Accelerator for Fluid Simulations},
+year = {2020},
+isbn = {9781450379830},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3392717.3392772},
+doi = {10.1145/3392717.3392772},
+abstract = {CFD is widely used in physical system design and optimization, where it is used to predict engineering quantities of interest, such as the lift on a plane wing or the drag on a motor vehicle. However, many systems of interest are prohibitively expensive for design optimization, due to the expense of evaluating CFD simulations.To render the computation tractable, reduced-order or surrogate models are used to accelerate simulations while respecting the convergence constraints provided by the higher-fidelity solution. This paper introduces CFDNet - a physical simulation and deep learning coupled framework, for accelerating the convergence of Reynolds Averaged Navier-Stokes simulations. CFDNet is designed to predict the primary physical properties of the fluid including velocity, pressure, and eddy viscosity using a single convolutional neural network at its core. We evaluate CFDNet on a variety of use-cases, both extrapolative and interpolative, where test geometries are observed/not-observed during training. Our results show that CFDNet meets the convergence constraints of the domain-specific physics solver while outperforming it by 1.9 - 7.4X on both steady laminar and turbulent flows. Moreover, we demonstrate the generalization capacity of CFDNet by testing its prediction on new geometries unseen during training. In this case, the approach meets the CFD convergence criterion while still providing significant speedups over traditional domain-only models.},
+booktitle = {Proceedings of the 34th ACM International Conference on Supercomputing},
+articleno = {3},
+numpages = {12},
+keywords = {turbulent flows, computational fluid dynamics, deep learning, physics-machine learning coupled framework, AI for science},
+location = {Barcelona, Spain},
+series = {ICS '20}
+}
+
+@article{pinn,
+title = "Physics-informed neural networks: A deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations",
+journal = "Journal of Computational Physics",
+volume = "378",
+pages = "686 - 707",
+year = "2019",
+issn = "0021-9991",
+doi = "https://doi.org/10.1016/j.jcp.2018.10.045",
+url = "http://www.sciencedirect.com/science/article/pii/S0021999118307125",
+author = "M. Raissi and P. Perdikaris and G.E. Karniadakis",
+keywords = "Data-driven scientific computing, Machine learning, Predictive modeling, Runge–Kutta methods, Nonlinear dynamics",
+abstract = "We introduce physics-informed neural networks – neural networks that are trained to solve supervised learning tasks while respecting any given laws of physics described by general nonlinear partial differential equations. In this work, we present our developments in the context of solving two main classes of problems: data-driven solution and data-driven discovery of partial differential equations. Depending on the nature and arrangement of the available data, we devise two distinct types of algorithms, namely continuous time and discrete time models. The first type of models forms a new family of data-efficient spatio-temporal function approximators, while the latter type allows the use of arbitrarily accurate implicit Runge–Kutta time stepping schemes with unlimited number of stages. The effectiveness of the proposed framework is demonstrated through a collection of classical problems in fluids, quantum mechanics, reaction–diffusion systems, and the propagation of nonlinear shallow-water waves."
+}
+
+@article{lbfgs,
+author = {Liu, Dong C. and Nocedal, Jorge},
+title = {On the Limited Memory BFGS Method for Large Scale Optimization},
+year = {1989},
+issue_date = {August    1989},
+publisher = {Springer-Verlag},
+address = {Berlin, Heidelberg},
+volume = {45},
+number = {1–3},
+issn = {0025-5610},
+abstract = {We study the numerical performance of a limited memory quasi-Newton method for large scale optimization, which we call the L-BFGS method. We compare its performance with that of the method developed by Buckley and LeNir (1985), which combines cycles of BFGS steps and conjugate direction steps. Our numerical tests indicate that the L-BFGS method is faster than the method of Buckley and LeNir, and is better able to use additional storage to accelerate convergence. We show that the L-BFGS method can be greatly accelerated by means of a simple scaling. We then compare the L-BFGS method with the partitioned quasi-Newton method of Griewank and Toint (1982a). The results show that, for some problems, the partitioned quasi-Newton method is clearly superior to the L-BFGS method. However we find that for other problems the L-BFGS method is very competitive due to its low iteration cost. We also study the convergence properties of the L-BFGS method, and prove global convergence on uniformly convex problems.},
+journal = {Math. Program.},
+month = aug,
+pages = {503–528},
+numpages = {26},
+keywords = {conjugate gradient method, Large scale nonlinear optimization, partitioned quasi-Newton method, limited memory methods}
+}
+
+
+@article{nn_pde_data, title={Solving parametric PDE problems with artificial neural networks}, DOI={10.1017/S0956792520000182}, journal={European Journal of Applied Mathematics}, publisher={Cambridge University Press}, author={Khoo, YUEHAW and LU, JIANFENG and YING, LEXING}, year={2020}, pages={1–15}}
+
+
+@misc{neural_op,
+      title={Fourier Neural Operator for Parametric Partial Differential Equations}, 
+      author={Zongyi Li and Nikola Kovachki and Kamyar Azizzadenesheli and Burigede Liu and Kaushik Bhattacharya and Andrew Stuart and Anima Anandkumar},
+      year={2020},
+      eprint={2010.08895},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG}
+}
+
+@misc{pinn_pathologies,
+      title={Understanding and mitigating gradient pathologies in physics-informed neural networks}, 
+      author={Sifan Wang and Yujun Teng and Paris Perdikaris},
+      year={2020},
+      eprint={2001.04536},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG}
+}
+
+@misc{pinn_convergence,
+      title={On the convergence of physics informed neural networks for linear second-order elliptic and parabolic type PDEs}, 
+      author={Yeonjong Shin and Jerome Darbon and George Em Karniadakis},
+      year={2020},
+      eprint={2004.01806},
+      archivePrefix={arXiv},
+      primaryClass={math.NA}
+}
+
+@article{pinn_uq,
+title = "Adversarial uncertainty quantification in physics-informed neural networks",
+journal = "Journal of Computational Physics",
+volume = "394",
+pages = "136 - 152",
+year = "2019",
+issn = "0021-9991",
+doi = "https://doi.org/10.1016/j.jcp.2019.05.027",
+url = "http://www.sciencedirect.com/science/article/pii/S0021999119303584",
+author = "Yibo Yang and Paris Perdikaris",
+keywords = "Variational inference, Generative adversarial networks, Probabilistic deep learning, Probabilistic scientific computing, Data-driven modeling",
+abstract = "We present a deep learning framework for quantifying and propagating uncertainty in systems governed by non-linear differential equations using physics-informed neural networks. Specifically, we employ latent variable models to construct probabilistic representations for the system states, and put forth an adversarial inference procedure for training them on data, while constraining their predictions to satisfy given physical laws expressed by partial differential equations. Such physics-informed constraints provide a regularization mechanism for effectively training deep generative models as surrogates of physical systems in which the cost of data acquisition is high, and training data-sets are typically small. This provides a flexible framework for characterizing uncertainty in the outputs of physical systems due to randomness in their inputs or noise in their observations that entirely bypasses the need for repeatedly sampling expensive experiments or numerical simulators. We demonstrate the effectiveness of our approach through a series of examples involving uncertainty propagation in non-linear conservation laws, and the discovery of constitutive laws for flow through porous media directly from noisy data."
+}
+
+@article {pinn_hfm,
+	author = {Raissi, Maziar and Yazdani, Alireza and Karniadakis, George Em},
+	title = {Hidden fluid mechanics: Learning velocity and pressure fields from flow visualizations},
+	volume = {367},
+	number = {6481},
+	pages = {1026--1030},
+	year = {2020},
+	doi = {10.1126/science.aaw4741},
+	publisher = {American Association for the Advancement of Science},
+	abstract = {Quantifying fluid flow is relevant to disciplines ranging from geophysics to medicine. Flow can be experimentally visualized using, for example, smoke or contrast agents, but extracting velocity and pressure fields from this information is tricky. Raissi et al. developed a machine-learning approach to tackle this problem. Their method exploits the knowledge of Navier-Stokes equations, which govern the dynamics of fluid flow in many scientifically relevant situations. The authors illustrate their approach using examples such as blood flow in an aneurysm.Science, this issue p. 1026For centuries, flow visualization has been the art of making fluid motion visible in physical and biological systems. Although such flow patterns can be, in principle, described by the Navier-Stokes equations, extracting the velocity and pressure fields directly from the images is challenging. We addressed this problem by developing hidden fluid mechanics (HFM), a physics-informed deep-learning framework capable of encoding the Navier-Stokes equations into the neural networks while being agnostic to the geometry or the initial and boundary conditions. We demonstrate HFM for several physical and biomedical problems by extracting quantitative information for which direct measurements may not be possible. HFM is robust to low resolution and substantial noise in the observation data, which is important for potential applications.},
+	issn = {0036-8075},
+	URL = {https://science.sciencemag.org/content/367/6481/1026},
+	eprint = {https://science.sciencemag.org/content/367/6481/1026.full.pdf},
+	journal = {Science}
+}
+
+@article{pinn_subsurface,
+author = {Tartakovsky, A. M. and Marrero, C. Ortiz and Perdikaris, Paris and Tartakovsky, G. D. and Barajas-Solano, D.},
+title = {Physics-Informed Deep Neural Networks for Learning Parameters and Constitutive Relationships in Subsurface Flow Problems},
+journal = {Water Resources Research},
+volume = {56},
+number = {5},
+pages = {e2019WR026731},
+keywords = {deep neural networks, physics-informed machine learning, parameter estimation, learning constitutive relationships, unsaturated flow, MAP},
+doi = {https://doi.org/10.1029/2019WR026731},
+url = {https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/2019WR026731},
+eprint = {https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/2019WR026731},
+note = {e2019WR026731 10.1029/2019WR026731},
+abstract = {Abstract We present a physics-informed deep neural network (DNN) method for estimating hydraulic conductivity in saturated and unsaturated flows governed by Darcy's law. For saturated flow, we approximate hydraulic conductivity and head with two DNNs and use Darcy's law in addition to measurements of hydraulic conductivity and head to train these DNNs. For unsaturated flow, we approximate unsaturated conductivity function and capillary pressure with DNNs and train these DNNs using measurements of capillary pressure and the Richards equation. Because it is difficult to measure unsaturated conductivity in the field, we assume that no measurements of unsaturated conductivity are available. The proposed approach enforces the partial differential equation (PDE) (Darcy or Richards equation) constraints by minimizing the PDE residual at select points in the simulation domain. We demonstrate that physics constraints increase the accuracy of DNN approximations of sparsely observed functions and allow for training DNNs when no direct measurements of the functions of interest are available. For the saturated conductivity estimation problem, we show that the physics-informed DNN method is more accurate than the state-of-the-art maximum a posteriori probability method. For the unsaturated flow in homogeneous porous media, we find that the proposed method can accurately estimate the pressure-conductivity relationship based on the capillary pressure measurements only, even in the presence of measurement noise.},
+year = {2020}
+}
+
+@misc{dl_lstm,
+      title={A Deep Learning based Approach to Reduced Order Modeling for Turbulent Flow Control using LSTM Neural Networks}, 
+      author={Arvind T. Mohan and Datta V. Gaitonde},
+      year={2018},
+      eprint={1804.09269},
+      archivePrefix={arXiv},
+      primaryClass={physics.comp-ph}
+}
+
+@incollection{pytorch,
+title = {PyTorch: An Imperative Style, High-Performance Deep Learning Library},
+author = {Paszke, Adam and Gross, Sam and Massa, Francisco and Lerer, Adam and Bradbury, James and Chanan, Gregory and Killeen, Trevor and Lin, Zeming and Gimelshein, Natalia and Antiga, Luca and Desmaison, Alban and Kopf, Andreas and Yang, Edward and DeVito, Zachary and Raison, Martin and Tejani, Alykhan and Chilamkurthy, Sasank and Steiner, Benoit and Fang, Lu and Bai, Junjie and Chintala, Soumith},
+booktitle = {Advances in Neural Information Processing Systems 32},
+editor = {H. Wallach and H. Larochelle and A. Beygelzimer and F. d\textquotesingle Alch\'{e}-Buc and E. Fox and R. Garnett},
+pages = {8024--8035},
+year = {2019},
+publisher = {Curran Associates, Inc.},
+url = {http://papers.neurips.cc/paper/9015-pytorch-an-imperative-style-high-performance-deep-learning-library.pdf}
+}
+
+@misc{tensorflow,
+title={ {TensorFlow}: Large-Scale Machine Learning on Heterogeneous Systems},
+url={https://www.tensorflow.org/},
+note={Software available from tensorflow.org},
+author={
+    Mart\'{\i}n~Abadi and
+    Ashish~Agarwal and
+    Paul~Barham and
+    Eugene~Brevdo and
+    Zhifeng~Chen and
+    Craig~Citro and
+    Greg~S.~Corrado and
+    Andy~Davis and
+    Jeffrey~Dean and
+    Matthieu~Devin and
+    Sanjay~Ghemawat and
+    Ian~Goodfellow and
+    Andrew~Harp and
+    Geoffrey~Irving and
+    Michael~Isard and
+    Yangqing Jia and
+    Rafal~Jozefowicz and
+    Lukasz~Kaiser and
+    Manjunath~Kudlur and
+    Josh~Levenberg and
+    Dandelion~Man\'{e} and
+    Rajat~Monga and
+    Sherry~Moore and
+    Derek~Murray and
+    Chris~Olah and
+    Mike~Schuster and
+    Jonathon~Shlens and
+    Benoit~Steiner and
+    Ilya~Sutskever and
+    Kunal~Talwar and
+    Paul~Tucker and
+    Vincent~Vanhoucke and
+    Vijay~Vasudevan and
+    Fernanda~Vi\'{e}gas and
+    Oriol~Vinyals and
+    Pete~Warden and
+    Martin~Wattenberg and
+    Martin~Wicke and
+    Yuan~Yu and
+    Xiaoqiang~Zheng},
+  year={2015},
+}
+
+@misc{adam,
+      title={Adam: A Method for Stochastic Optimization}, 
+      author={Diederik P. Kingma and Jimmy Ba},
+      year={2017},
+      eprint={1412.6980},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG}
+}
+
+@article{laaf,
+abstract = {We propose two approaches of locally adaptive activation functions namely, layer-wise and neuron-wise locally adaptive activation functions, which improve the performance of deep and physics-informed neural networks. The local adaptation of activation function is achieved by introducing scalable hyper-parameters in each layer (layer-wise) and for every neuron separately (neuron-wise), and then optimizing it using the stochastic gradient descent algorithm. Introduction of neuron-wise activation function acts like a vector activation function in each hidden-layer as opposed to the traditional scalar activation function given by fixed, global and layer-wise activations. In order to further increase the training speed, an activation slope based slope recovery term is added in the loss function, which further accelerate convergence, thereby reducing the training cost. For numerical experiments, a nonlinear discontinuous function is approximated using a deep neural network with layer-wise and neuron-wise locally adaptive activation functions with and without the slope recovery term and compared with its global counterpart. Moreover, solution of the nonlinear Burgers equation, which exhibits steep gradients, is also obtained using the proposed methods. On the theoretical side, we prove that in the proposed method the gradient descent algorithms are not attracted to sub-optimal critical points or local minima under practical conditions on the initialization and learning rate. Furthermore, the proposed adaptive activation functions with the slope recovery are shown to accelerate the training process in standard deep learning benchmarks using CIFAR-10, CIFAR-100, SVHN, MNIST, KMNIST, Fashion-MNIST, and Semeion data sets with and without data augmentation.},
+archivePrefix = {arXiv},
+arxivId = {1909.12228},
+author = {Jagtap, Ameya D. and Kawaguchi, Kenji and Karniadakis, George Em},
+doi = {10.1098/rspa.2020.0334},
+eprint = {1909.12228},
+file = {:home/marci/UNI/MASTER/8. Semester/Masterarbeit/masterarbeit{\_}marcel/Literatur/Pinns{\_}efficiency/LocallyAdaptiveActivationFunctionsWithSlopeRecovery.pdf:pdf},
+issn = {1364-5021},
+journal = {arXiv},
+keywords = {Accelerated training,Bad minima,Deep learning benchmarks.,Machine learning,PINN,Stochastic gradients},
+title = {{Locally adaptive activation functions with slope recovery term for deep and physics-informed neural networks}},
+year = {2019}
+}
+
+@article{siren,
+abstract = {Implicitly defined, continuous, differentiable signal representations parameterized by neural networks have emerged as a powerful paradigm, offering many possible benefits over conventional representations. However, current network architectures for such implicit neural representations are incapable of modeling signals with fine detail, and fail to represent a signal's spatial and temporal derivatives, despite the fact that these are essential to many physical signals defined implicitly as the solution to partial differential equations. We propose to leverage periodic activation functions for implicit neural representations and demonstrate that these networks, dubbed j or SIRENs, are ideally suited for representing complex natural signals and their derivatives. We analyze SIREN activation statistics to propose a principled initialization scheme and demonstrate the representation of images, wavefields, video, sound, and their derivatives. Further, we show how SIRENs can be leveraged to solve challenging boundary value problems, such as particular Eikonal equations (yielding signed distance functions), the Poisson equation, and the Helmholtz and wave equations. Lastly, we combine SIRENs with hypernetworks to learn priors over the space of SIREN functions. Please see the project website for a video overview of the proposed method and all applications.},
+archivePrefix = {arXiv},
+arxivId = {2006.09661},
+author = {Sitzmann, Vincent and Martel, Julien N.P. and Bergman, Alexander W. and Lindell, David B. and Wetzstein, Gordon and University, Stanford},
+eprint = {2006.09661},
+file = {:home/marci/UNI/MASTER/8. Semester/Masterarbeit/masterarbeit{\_}marcel/Literatur/Pinns{\_}efficiency/PeriodicActivationFunctions.pdf:pdf},
+journal = {arXiv},
+title = {{Implicit Neural Representations with Periodic Activation Functions}},
+year = {2020}
+}
+
+@article{McClenny2020,
+abstract = {Physics-Informed Neural Networks (PINNs) have emerged recently as a promising application of deep neural networks to the numerical solution of nonlinear partial differential equations (PDEs). However, the original PINN algorithm is known to suffer from stability and accuracy problems in cases where the solution has sharp spatio-temporal transitions. These stiff PDEs require an unreasonably large number of collocation points to be solved accurately. It has been recognized that adaptive procedures are needed to force the neural network to fit accurately the stubborn spots in the solution of stiff PDEs. To accomplish this, previous approaches have used fixed weights hard-coded over regions of the solution deemed to be important. In this paper, we propose a fundamentally new method to train PINNs adaptively, where the adaptation weights are fully trainable, so the neural network learns by itself which regions of the solution are difficult and is forced to focus on them, which is reminiscent of soft multiplicative-mask attention mechanism used in computer vision. The basic idea behind these Self-Adaptive PINNs is to make the weights increase where the corresponding loss is higher, which is accomplished by training the network to simultaneously minimize the losses and maximize the weights, i.e., to find a saddle point in the cost surface. We show that this is formally equivalent to solving a PDE-constrained optimization problem using a penalty-based method, though in a way where the monotonically-nondecreasing penalty coefficients are trainable. Numerical experiments with an Allen-Cahn stiff PDE, the Self-Adaptive PINN outperformed other state-of-the-art PINN algorithms in L2 error by a wide margin, while using a smaller number of training epochs. An Appendix contains additional results with Burger's and Helmholtz PDEs, which confirmed the trends observed in the Allen-Cahn experiments.},
+archivePrefix = {arXiv},
+arxivId = {2009.04544},
+author = {McClenny, Levi and Braga-Neto, Ulisses},
+eprint = {2009.04544},
+title = {{Self-Adaptive Physics-Informed Neural Networks using a Soft Attention Mechanism}},
+url = {http://arxiv.org/abs/2009.04544},
+year = {2020}
+}
+
+@article{lra,
+abstract = {The widespread use of neural networks across different scientific domains often involves constraining them to satisfy certain symmetries, conservation laws, or other domain knowledge. Such constraints are often imposed as soft penalties during model training and effectively act as domain-specific regularizers of the empirical risk loss. Physics-informed neural networks is an example of this philosophy in which the outputs of deep neural networks are constrained to approximately satisfy a given set of partial differential equations. In this work we review recent advances in scientific machine learning with a specific focus on the effectiveness of physics-informed neural networks in predicting outcomes of physical systems and discovering hidden physics from noisy data. We will also identify and analyze a fundamental mode of failure of such approaches that is related to numerical stiffness leading to unbalanced back-propagated gradients during model training. To address this limitation we present a learning rate annealing algorithm that utilizes gradient statistics during model training to balance the interplay between different terms in composite loss functions. We also propose a novel neural network architecture that is more resilient to such gradient pathologies. Taken together, our developments provide new insights into the training of constrained neural networks and consistently improve the predictive accuracy of physics-informed neural networks by a factor of 50-100x across a range of problems in computational physics. All code and data accompanying this manuscript are publicly available at https://github.com/PredictiveIntelligenceLab/ GradientPathologiesPINNs.},
+archivePrefix = {arXiv},
+arxivId = {2001.04536},
+author = {Wang, Sifan and Teng, Yujun and Perdikaris, Paris},
+eprint = {2001.04536},
+file = {:home/marci/UNI/MASTER/8. Semester/Masterarbeit/masterarbeit{\_}marcel/Literatur/Pinns{\_}efficiency/UnderstandingAndMitigatingGradientPathologiesInPINNS.pdf:pdf},
+journal = {arXiv},
+keywords = {Computational physics,Deep learning {\textperiodcentered},Differential equations {\textperiodcentered},Optimization {\textperiodcentered},Stiff dynamics {\textperiodcentered}},
+pages = {1--28},
+title = {{Understanding and Mitigating Gradient Pathologies in Physics-Informed Neural Networks}},
+year = {2020}
+}
+
+
+
+@misc{clawpack,
+      title={Clawpack software}, 
+      author={Clawpack Development Team}, 
+      url={http://www.clawpack.org}, 
+      note={Version 5.1},
+      year={2014}}
+
+@inproceedings{nn_pde_cnn,
+author = {Tompson, Jonathan and Schlachter, Kristofer and Sprechmann, Pablo and Perlin, Ken},
+title = {Accelerating Eulerian Fluid Simulation with Convolutional Networks},
+year = {2017},
+publisher = {JMLR.org},
+abstract = {Efficient simulation of the Navier-Stokes equations for fluid flow is a long standing problem in applied mathematics, for which state-of-the-art methods require large compute resources. In this work, we propose a data-driven approach that leverages the approximation power of deep-learning with the precision of standard solvers to obtain fast and highly realistic simulations. Our method solves the incompressible Euler equations using the standard operator splitting method, in which a large sparse linear system with many free parameters must be solved. We use a Convolutional Network with a highly tailored architecture, trained using a novel unsupervised learning framework to solve the linear system. We present real-time 2D and 3D simulations that outperform recently proposed data-driven methods; the obtained results are realistic and show good generalization properties.},
+booktitle = {Proceedings of the 34th International Conference on Machine Learning - Volume 70},
+pages = {3424–3433},
+numpages = {10},
+location = {Sydney, NSW, Australia},
+series = {ICML'17}
+}
+
+@article{pyclaw-sisc,
+        Author = {Ketcheson, David I. and Mandli, Kyle T. and Ahmadia, Aron J. and Alghamdi, Amal and {Quezada de Luna}, Manuel and Parsani, Matteo and Knepley, Matthew G. and Emmett, Matthew},
+        Journal = {SIAM Journal on Scientific Computing},
+        Month = nov,
+        Number = {4},
+        Pages = {C210--C231},
+        Title = {{PyClaw: Accessible, Extensible, Scalable Tools for Wave Propagation Problems}},
+        Volume = {34},
+        Year = {2012}}
+
+@incollection{hlle,
+abstract = {The approximate Riemann solver proposed by Harten Lax and van Leer (HLL) in 1983 requires estimates for the fastest signal velocities emerging from the initial discontinuity at the interface, resulting in a two--wave model for the structure of the exact solution. A more accurate method is the HLLC, introduced by Toro and collaborators in 1992. This method assumes a three--wave model, resulting in better resolution of intermediate waves.},
+author = {Toro, Eleuterio F. and Toro, Eleuterio F.},
+booktitle = {Riemann Solvers and Numerical Methods for Fluid Dynamics},
+doi = {10.1007/b79761_10},
+title = {{The HLL and HLLC Riemann Solvers}},
+year = {2009}
+}
+
+@book{fwave,
+abstract = {We give a brief review of the wave-propagation algorithm, a high-resolution finite volume method for solving hyperbolic systems of conser-vation laws. These methods require a Riemann solver to resolve the jump in variables at each cell interface into waves. We present a Riemann solver for the shallow water equations that works robustly with bathymetry and dry states. This method is implemented in clawpack and applied to benchmark problems from the Third International Workshop on Long-Wave Runup Models, including a two-dimensional simulation of runup during the 1993 tsunami event on Okushiri Island. Comparison is made with wave tank experimental data provided for the workshop. Some pre-liminary results using adaptive mesh refinement on the 26 December 2004 Sumatra event are also presented.},
+author = {LeVeque, Randall J. and George, David L.},
+doi = {10.1142/9789812790910_0002},
+file = {:home/marci/UNI/MASTER/8. Semester/Masterarbeit/masterarbeit{\_}marcel/Literatur/Fluid Mechanics {\&} Shallow Water Equations/High-Resolution{\_}Finite{\_}Volume{\_}Methods{\_}for{\_}the{\_}Shal.pdf:pdf},
+isbn = {9789812790910},
+pages = {43--73},
+title = {{High-Resolution Finite Volume Methods for the Shallow Water Equations With Bathymetry and Dry States}},
+year = {2008}
+}
+
+@inproceedings{tsunami,
+  title={Modelling tsunami inundation on coastlines with characteristic form},
+  author={Baldock, TE and Barnes, MP and Guard, PA and Hie, Thomas and Hanslow, D and Ranasinghe, R and Gray, D and Nielsen, O},
+  booktitle={Proceedings of the 16th Australasian Fluid Mechanics Conference, 16AFMC},
+  pages={939--942},
+  year={2007},
+  organization={School of Engineering, The University of Queensland}
+}
+
+@book{swe_navier,
+author = {Wesseling, Pieter},
+title = {Principles of Computational Fluid Dynamics},
+year = {2000},
+isbn = {3540678530},
+publisher = {Springer-Verlag},
+address = {Berlin, Heidelberg}
+}
