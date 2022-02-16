@@ -107,3 +107,12 @@ class MultiFolderDataset(Dataset):
         ret_data[2, :, :] = torch.as_tensor(temp, dtype=torch.float32)
 
         return ret_data
+
+
+def get_single_example():
+    data_path = (
+        "/import/sgs.local/scratch/leiterrl/Geothermal-ML/PFLOTRAN-Data/noFlow_withFlow"
+    )
+    mf_dataset = MultiFolderDataset([data_path + "/batch1"], data_augmentation=False)
+
+    return mf_dataset[0]
