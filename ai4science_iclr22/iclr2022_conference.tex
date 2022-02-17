@@ -7,6 +7,8 @@
 
 \usepackage{hyperref}
 \usepackage{url}
+\usepackage{graphicx}
+\usepackage{cleveref}
 
 
 \title{Formatting Instructions for ICLR 2022 \\ Conference Submissions}
@@ -61,6 +63,17 @@ Address \\
 \end{abstract}
 
 \section{Introduction}
+\label{sec:intro}
+In a world moving towards renewables ernergy as main 
+One crucial development of the past decade to achieve this is the widespread adoption of more energy efficient and carbon-free techniques for heating and cooling urban buildings.
+A central role plays the usage of heatpumps extracting energy from subsurface groundwater 
+
+Establishing this technology on a large city-wide scale however, requires some regulatory oversight for the locations and energetic dimensions of installed heatpumps.
+Installing these without any restrictions might result in situations where the heat injection/substraction from one pump might negatively impact the performance of another pump down-stream.
+
+In a first step to address this optimization problem this work aims at providing a web-based tool for city planners to quickly test out different placement scenarios.
+Using a machine learning surrogates we want to predict physically accurate temperature fields in real-time based in the users input and measured groundwater flow fields of a large European city.
+
 - general motivation (large scale heatpump adoption requires optimization of placements etc.)
 \begin{enumerate}
 \item The large scale roll-out of shallow groundwater heat pumps often results in thermal interference of the installed heat pumps.
@@ -77,15 +90,30 @@ KD: We can remove GeoKW and I can explain the project. The web-app isnt live so 
 \item Second application is a web-based planning tool, which gives energy planners an easy tool to assess compatability.
 \end{enumerate}
 
+\textbf{Related Work}
+
+Using 
 - related work (TurbNet etc.)
 
+\section{Method}
+\label{sec:method}
 
-\section{Theory}
+\subsection*{Dataset Description}
+- to train fast surrogate we need data
 
-Stationary Equations (Richards):
+- data is generated using FV solver pflotran for different configurations
+
+- underlying equations are the (stationary) Richards flow equations
+
+- generate arbitrary configurations with smooth random flow fields
+
+- injection in the middle of the domain leads to some temperature plume
+
+- we solve a bunch of these until a quasi-stationary state is achieved
 
 Mass conservation
 \begin{equation}
+   \label{eq:mass}
    \nabla \cdot \left(\eta \vq \right) = Q_w
 \end{equation}
 
@@ -93,6 +121,7 @@ Thermal-Hydraulic:
 
 Energy conservation
 \begin{equation}
+   \label{eq:energy}
    \nabla \cdot \left(\eta \vq H\right) - \kappa \Delta T = Q_e
 \end{equation}
 
@@ -102,20 +131,57 @@ with energy source term $Q_e$ in $MW/m^2$ as well as mass source term $Q_w$ in $
    \hline
    $\eta$   & molar density        & $55.3454010547$ $kmol/m^3$ \\
    \hline
-   $\kappa$ & thermal conductivity & $0.5$ $W/(m \cdot K)$                   \\
+   $\kappa$ & thermal conductivity & $0.5 W/(mK)$                   \\
    \hline
-   H        & enthalpy             & $1000$ $J/(K \cdot kg)$                  \\
+   H        & specific enthalpy of water             & $1.134945 kJ/mol$                  \\
    \hline
 \end{tabular}
 
-\section{Model}
-- CNN
-
-- TurbNet Architecture
-
 - Data augmentation? 
 
-\section{Experiments}
+
+
+\subsection*{Model}
+- as surrogate we use a TurbNet structure
+\begin{figure}[htb]
+   \centering
+   \includegraphics[width=9cm]{example-image-a}
+   \caption{Visualization of the network architecture. The encode and decoder paths feature a 2d convultions with a kernlsize of $4$. Both paths are connected via skip connections in each level.}
+   \label{fig:arch}
+\end{figure}
+
+For our surrogate we chose a slightly modified version of the ``TurbNet'' architecture as described in \cite{turbnet}.
+The general shape is similar to a simple ``UNet'' \cite{unet} where the input is convolved into coarser and coarser features on a contracting path.
+This is done until a bottleneck level is reached.
+From this on the feature channels are again deconvolved in a symmetric fashion upwards.
+Additionally, each step in the hierarchy also includes a skip connection copying intermediate results from the contracting path and concatenating it feature wise to the results of the expanding path.
+A graphical overview is depicted in Figure \ref{fig:arch}
+
+- why did we choose this?
+
+- what is "slightly modified"?
+
+- network description here
+- this allows us to directly predict stationary temperature plume for a given flow field
+- this surrogate can then be used in a real-time setting to make predictions for the website user
+
+
+\subsubsection*{Physical Constraints}
+Additionally, we use \cref{eq:mass,eq:energy} to regularize the network during training.
+By ensuring that both of these are fulfilled for predictions of the model we steer the training process towards physically plausible solutions which obey mass and energy conservation.
+To achieve this we first calculate the residuals for both equations using sobel filters to get the gradient/divergence fields.
+These residuals are then added to the loss function of the optimizer.
+
+- using these we can additionally regularize the network during training
+- makes sure that physically plausible solutions are found
+- should be more robust?
+- comparison with and without physical term (speeds up training?)
+
+
+
+\section{Results}
+\label{sec:results}
+
 - Data description
 
 - Data generation (using PFLOTRAN)
@@ -125,14 +191,31 @@ with energy source term $Q_e$ in $MW/m^2$ as well as mass source term $Q_w$ in $
 \end{enumerate}
 
 - model setup
+\begin{figure}[htb]
+   \centering
+   \includegraphics[width=5cm]{example-image-a}
+   \caption{Example visualization of a single data sample. Streamlines represent the darcy flow velocity overlay over a plot of the temperature.}
+\end{figure}
 
 - evaluation (error on test set, inference time)
 
+
+\begin{figure}[htb]
+   \centering
+   \includegraphics[width=10cm,height=6cm]{example-image-a}
+   \caption{Example screenshot of a web app showing multiple hand placed heatpumps on a city map with heat plumes being generated using the surrogate model.}
+\end{figure}
 - overlay of local surrogates on city map (?)
 
 \section{Conclusion}
+\label{sec:conclusion}
 
-- future work: overlapping local predictions -> resolve with global city-wide model
+- future work: overlapping local predictions $\rightarrow$ resolve with global city-wide model
+
+In the future we would like to expand the surrogate model by also including a heatpump's power as a parametric input.
+Furthermore a shortcoming of the current approach is that overlapping temperature plumes are not considered.
+Even though in this application that scenario is not desirable, other applications might need such interaction.
+To deal with this another extension could be stitching together multiple local surrogate predictions and then using that as a preconditioned starting position for solving a traditional large scale numerical model of the whole city domain.
 
 - Web app currently uses analytical formulas. Want to add this as it uses non-uniform velocities.
 
@@ -236,9 +319,9 @@ Citations within the text should be based on the \texttt{natbib} package
 and include the authors' last names and year (with the ``et~al.'' construct
 for more than two authors). When the authors or the publication are
 included in the sentence, the citation should not be in parenthesis using \verb|\citet{}| (as
-in ``See \citet{Hinton06} for more information.''). Otherwise, the citation
+in ``See \citet{nn_pde1} for more information.''). Otherwise, the citation
 should be in parenthesis using \verb|\citep{}| (as in ``Deep learning shows promise to make progress
-towards AI~\citep{Bengio+chapter2007}.'').
+towards AI~\citep{nn_pde2}.'').
 
 The corresponding references are to be listed in alphabetical order of
 authors, in the \textsc{References} section. As to the format of the

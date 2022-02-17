@@ -282,9 +282,23 @@ def constitutive_constraint(input, output, sobel_filter: SobelFilter):
             three channels from 0-2: u, sigma_1, sigma_2
     """
 
+    # water density
+    # molar mass: 18.015 g/mol
+    # 0.9970474 g/ml at 25° -> /18.015 /1000 * 10^6 = 55.3454010547 kmol/m^3
+    # molar_water_density = (0.9970474 / 18.01528) * 1000
+    molar_water_density = 55.3445408564
+
+    # W / m*K
+    thermal_conductivity = 0.5
+
+    # molar mass: 18.015 g/mol
+    # specific enthalpy of water at 15°C: 63.0 kJ/kg
+    # H = 63.0 * 18.015 * 0.001 kJ/mol
+    H = 1.134945
+
     # only diffusion: 20-40 W of energy source
     source_mass = 0.0
-    source_energy = 800.0
+    source_energy = 200.0
 
     source_energy_img = torch.zeros_like(output)
     source_energy_img[:, :, 31:32, 31:32] = source_energy / 4.0
@@ -294,14 +308,9 @@ def constitutive_constraint(input, output, sobel_filter: SobelFilter):
     # darcy flow
     # m/day
     # conv_factor = 1.0 / (24 * 60 * 60)
-    conv_factor = 1.0 / (24.0 * 60)
+    conv_factor = 1.0 / (24.0 * 60 * 60)
     q_u = input[:, 0, :, :].unsqueeze(1) * conv_factor
     q_v = input[:, 1, :, :].unsqueeze(1) * conv_factor
-
-    # water density
-    # water: 18.015 g/mol
-    # 0.9970474 g/ml at 25° -> /18.015 /1000 * 10^6 = 55.3454010547 kmol/m^3
-    molar_water_density = 55.3454010547
 
     # divergence
     mass_residual = (
@@ -310,8 +319,6 @@ def constitutive_constraint(input, output, sobel_filter: SobelFilter):
     )
 
     # energy balance
-    thermal_conductivity = 0.5
-    H = 1000.0
 
     diffusion = thermal_conductivity * sobel_filter.grad_temp(output)
 
