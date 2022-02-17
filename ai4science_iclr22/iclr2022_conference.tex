@@ -9,6 +9,8 @@
 \usepackage{url}
 \usepackage{graphicx}
 \usepackage{cleveref}
+\usepackage{todonotes}
+\setuptodonotes{inline}
 
 
 \title{Formatting Instructions for ICLR 2022 \\ Conference Submissions}
@@ -64,7 +66,7 @@ Address \\
 
 \section{Introduction}
 \label{sec:intro}
-In a world moving towards renewables ernergy as main 
+In a world moving towards renewable energy sources
 One crucial development of the past decade to achieve this is the widespread adoption of more energy efficient and carbon-free techniques for heating and cooling urban buildings.
 A central role plays the usage of heatpumps extracting energy from subsurface groundwater 
 
@@ -92,24 +94,27 @@ KD: We can remove GeoKW and I can explain the project. The web-app isnt live so 
 
 \textbf{Related Work}
 
-Using 
-- related work (TurbNet etc.)
+Developing machine learning surrogates for physical applications has seen a lot of development in recent years.
+Equally the number of different approaches is quite diverse.
+One of these are physics-informed methods where a neural network (NN) is trained to approximate the solution of a specific boundary-value problem \cite{pinn}.
+This works by adding the PDE residual of the underlying equations to the loss function and thus optimizing the network for solutions which obey the underlying physical laws.
+Other approaches such as CFDNet \cite{cfdnet} include an NN surrogate as a pre-conditioner inside a traditional numerical solver.
 
 \section{Method}
 \label{sec:method}
 
 \subsection*{Dataset Description}
-- to train fast surrogate we need data
+\todo{to train fast surrogate we need data}
 
-- data is generated using FV solver pflotran for different configurations
+\todo{data is generated using FV solver pflotran for different configurations}
 
-- underlying equations are the (stationary) Richards flow equations
+\todo{underlying equations are the (stationary) Richards flow equations}
 
-- generate arbitrary configurations with smooth random flow fields
+\todo{generate arbitrary configurations with smooth random flow fields}
 
-- injection in the middle of the domain leads to some temperature plume
+\todo{injection in the middle of the domain leads to some temperature plume}
 
-- we solve a bunch of these until a quasi-stationary state is achieved
+\todo{we solve a bunch of these until a quasi-stationary state is achieved}
 
 Mass conservation
 \begin{equation}
@@ -137,12 +142,12 @@ with energy source term $Q_e$ in $MW/m^2$ as well as mass source term $Q_w$ in $
    \hline
 \end{tabular}
 
-- Data augmentation? 
+\todo{Data augmentation?}
 
 
 
 \subsection*{Model}
-- as surrogate we use a TurbNet structure
+\todo{as surrogate we use a TurbNet structure}
 \begin{figure}[htb]
    \centering
    \includegraphics[width=9cm]{example-image-a}
@@ -157,13 +162,13 @@ From this on the feature channels are again deconvolved in a symmetric fashion u
 Additionally, each step in the hierarchy also includes a skip connection copying intermediate results from the contracting path and concatenating it feature wise to the results of the expanding path.
 A graphical overview is depicted in Figure \ref{fig:arch}
 
-- why did we choose this?
+\todo{why did we choose this?}
 
-- what is "slightly modified"?
+\todo{what is "slightly modified"?}
 
-- network description here
-- this allows us to directly predict stationary temperature plume for a given flow field
-- this surrogate can then be used in a real-time setting to make predictions for the website user
+\todo{- network description here}
+\todo{- this allows us to directly predict stationary temperature plume for a given flow field}
+\todo{- this surrogate can then be used in a real-time setting to make predictions for the website user}
 
 
 \subsubsection*{Physical Constraints}
@@ -172,17 +177,17 @@ By ensuring that both of these are fulfilled for predictions of the model we ste
 To achieve this we first calculate the residuals for both equations using sobel filters to get the gradient/divergence fields.
 These residuals are then added to the loss function of the optimizer.
 
-- using these we can additionally regularize the network during training
-- makes sure that physically plausible solutions are found
-- should be more robust?
-- comparison with and without physical term (speeds up training?)
+\todo{- using these we can additionally regularize the network during training}
+\todo{- makes sure that physically plausible solutions are found}
+\todo{- should be more robust?}
+\todo{- comparison with and without physical term (speeds up training?)}
 
 
 
 \section{Results}
 \label{sec:results}
 
-- Data description
+\todo{- Data description}
 
 - Data generation (using PFLOTRAN)
 \begin{enumerate}
@@ -190,14 +195,14 @@ These residuals are then added to the loss function of the optimizer.
 \item Simulate this with added heat flux to determine temperatures
 \end{enumerate}
 
-- model setup
+\todo{- model setup}
 \begin{figure}[htb]
    \centering
    \includegraphics[width=5cm]{example-image-a}
    \caption{Example visualization of a single data sample. Streamlines represent the darcy flow velocity overlay over a plot of the temperature.}
 \end{figure}
 
-- evaluation (error on test set, inference time)
+\todo{- evaluation (error on test set, inference time)}
 
 
 \begin{figure}[htb]
@@ -205,12 +210,14 @@ These residuals are then added to the loss function of the optimizer.
    \includegraphics[width=10cm,height=6cm]{example-image-a}
    \caption{Example screenshot of a web app showing multiple hand placed heatpumps on a city map with heat plumes being generated using the surrogate model.}
 \end{figure}
-- overlay of local surrogates on city map (?)
+\todo{- overlay of local surrogates on city map (?)}
 
 \section{Conclusion}
 \label{sec:conclusion}
 
-- future work: overlapping local predictions $\rightarrow$ resolve with global city-wide model
+
+
+\todo{- future work: overlapping local predictions $\rightarrow$ resolve with global city-wide model}
 
 In the future we would like to expand the surrogate model by also including a heatpump's power as a parametric input.
 Furthermore a shortcoming of the current approach is that overlapping temperature plumes are not considered.

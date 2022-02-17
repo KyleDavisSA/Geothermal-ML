@@ -363,3 +363,17 @@ isbn = {3540678530},
 publisher = {Springer-Verlag},
 address = {Berlin, Heidelberg}
 }
+
+@InBook{cfdnet,
+  author    = {Obiols-Sales, Octavi and Vishnu, Abhinav and Malaya, Nicholas and Chandramowliswharan, Aparna},
+  publisher = {Association for Computing Machinery},
+  title     = {CFDNet: A Deep Learning-Based Accelerator for Fluid Simulations},
+  year      = {2020},
+  address   = {New York, NY, USA},
+  isbn      = {9781450379830},
+  abstract  = {CFD is widely used in physical system design and optimization, where it is used to predict engineering quantities of interest, such as the lift on a plane wing or the drag on a motor vehicle. However, many systems of interest are prohibitively expensive for design optimization, due to the expense of evaluating CFD simulations.To render the computation tractable, reduced-order or surrogate models are used to accelerate simulations while respecting the convergence constraints provided by the higher-fidelity solution. This paper introduces CFDNet - a physical simulation and deep learning coupled framework, for accelerating the convergence of Reynolds Averaged Navier-Stokes simulations. CFDNet is designed to predict the primary physical properties of the fluid including velocity, pressure, and eddy viscosity using a single convolutional neural network at its core. We evaluate CFDNet on a variety of use-cases, both extrapolative and interpolative, where test geometries are observed/not-observed during training. Our results show that CFDNet meets the convergence constraints of the domain-specific physics solver while outperforming it by 1.9 - 7.4X on both steady laminar and turbulent flows. Moreover, we demonstrate the generalization capacity of CFDNet by testing its prediction on new geometries unseen during training. In this case, the approach meets the CFD convergence criterion while still providing significant speedups over traditional domain-only models.},
+  articleno = {3},
+  booktitle = {Proceedings of the 34th ACM International Conference on Supercomputing},
+  numpages  = {12},
+  url       = {https://doi.org/10.1145/3392717.3392772},
+}
