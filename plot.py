@@ -6,7 +6,7 @@ from random import randint
 
 
 def plot_temperature_ax(ax, temp):
-    return ax.imshow(temp, origin="lower", vmin=-5.0, vmax=5.0)
+    return ax.imshow(temp, origin="lower", vmin=-1.0, vmax=1.0)
 
 
 def plot_velocity_temperature_ax(ax, vel, temp, imsize: int = 64):
@@ -42,9 +42,7 @@ def plot_comparison(input, pred, target):
     fig, axes = plt.subplots(1, 3, figsize=(12, 12))
     ax_pred = plot_velocity_temperature_ax(axes[0], input, pred.squeeze())
     ax_target = plot_velocity_temperature_ax(axes[1], input, target.squeeze())
-    ax_error = plot_velocity_temperature_ax(
-        axes[2], input, (target - pred).abs().squeeze()
-    )
+    ax_error = plot_velocity_temperature_ax(axes[2], input, (target - pred).abs().squeeze())
     axes[0].set_title("Pred")
     axes[1].set_title("GT")
     axes[2].set_title("Err")
@@ -77,7 +75,9 @@ def plot_multi_comparison(input, pred, target):
 
 
 if __name__ == "__main__":
-    data_path = "/import/sgs.local/scratch/leiterrl/Geothermal-ML/PFLOTRAN-Data/generated/SingleDirection"
+    data_path = (
+        "/import/sgs.local/scratch/leiterrl/Geothermal-ML/PFLOTRAN-Data/generated/SingleDirection"
+    )
     folder_list = [os.path.join(data_path, f"batch{i+1}") for i in range(2, 3)]
     mf_dataset = MultiFolderDataset(folder_list)
     idx = randint(0, len(mf_dataset) - 1)
