@@ -39,9 +39,7 @@ class SobelFilter(object):
 
         self.SOBEL_WEIGHTS_TEMP_V_UP = self.SOBEL_WEIGHTS_TEMP_H_UP.transpose(-1, -2)
 
-        self.SOBEL_WEIGHTS_TEMP_V_DOWN = self.SOBEL_WEIGHTS_TEMP_H_DOWN.transpose(
-            -1, -2
-        )
+        self.SOBEL_WEIGHTS_TEMP_V_DOWN = self.SOBEL_WEIGHTS_TEMP_H_DOWN.transpose(-1, -2)
 
         self.VSOBEL_WEIGHTS_5x5 = (
             torch.FloatTensor(
@@ -298,7 +296,7 @@ def constitutive_constraint(input, output, sobel_filter: SobelFilter):
 
     # only diffusion: 20-40 W of energy source
     source_mass = 0.0
-    source_energy = 200.0
+    source_energy = 50.0
 
     source_energy_img = torch.zeros_like(output)
     source_energy_img[:, :, 31:32, 31:32] = source_energy / 4.0
