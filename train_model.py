@@ -232,24 +232,25 @@ def run_epoch(rank, world_size):
                 # TODO: this is bad to assume i guess...
                 first_loss_max_grad = torch.max(torch.abs(mse_loss_grad))
                 update = first_loss_max_grad / torch.mean(torch.abs(res_loss_grad))
-                res_loss_weight = (
-                    1.0 - lra_alpha
-                ) * res_loss_weight + lra_alpha * update
+                res_loss_weight = (1.0 - lra_alpha) * res_loss_weight + lra_alpha * update
                 writer.add_scalar("res_weight", res_loss_weight, epoch)
 
-            # model.zero_grad()
-            output = model(input)
-
-            mse_loss = loss_fn(output, target)
-            res_loss = constitutive_constraint(input, output, sobel_filter)
-            # res_loss = 0
-            loss = mse_loss + res_loss_weight * res_loss
-            # loss = res_loss
-            # loss = mse_loss
-
+            model.zero_grad()
             optimizer.zero_grad()
+
+            # with autocast("cuda"):
+            output = model(input)
+            mse_loss = loss_fn(output, target)
+            loss = mse_loss
+            if physical_loss:
+                res_loss = constitutive_constraint(input, output, sobel_filter)
+                loss = mse_loss + res_loss_weight * res_loss
+
             loss.backward()
+            # scaler.scale(loss).backward()
             optimizer.step()
+            # scaler.step(optimizer)
+            # scaler.update()
             # scheduler.step()
             iteration += 1
 
@@ -282,7 +283,9 @@ def run_epoch(rank, world_size):
                 torch.save(
                     {
                         "epoch": epoch,
-                        "model_state_dict": model.module.state_dict() if distributed_training else model.module.state_dict(),
+                        "model_state_dict": model.module.state_dict()
+                        if distributed_training
+                        else model.state_dict(),
                         "optim_state_dict": optimizer.state_dict(),
                         "loss": loss,
                         "test_loss": test_loss,
