@@ -10,6 +10,9 @@ from torchvision.transforms.functional import InterpolationMode
 from torchvision.transforms.transforms import CenterCrop
 
 
+temp_offset = 15
+
+
 class MultiFolderDataset(Dataset):
     def __init__(
         self,
@@ -35,17 +38,22 @@ class MultiFolderDataset(Dataset):
         if data_augmentation:
             self.dataset_size += data_augmentation_samples
 
-        self.dataset_tensor = torch.empty(
-            [self.dataset_size, 3, self.imsize, self.imsize]
-        )
+        self.dataset_tensor = torch.empty([self.dataset_size, 3, self.imsize, self.imsize])
         for idx, file_path in enumerate(eligible_files):
             print(idx)
             self.dataset_tensor[idx, :, :, :] = self.load_vtk_file(file_path)
 
+        # normalize data by max over whole dataset
+        if self.normalize:
+            v_x_max_inv = 1.0 / self.dataset_tensor[:, 0, :, :].abs().max()
+            v_y_max_inv = 1.0 / self.dataset_tensor[:, 1, :, :].abs().max()
+            temp_max_inv = 1.0 / self.dataset_tensor[:, 2, :, :].abs().max()
+            self.dataset_tensor[:, 0, :, :] = self.dataset_tensor[:, 0, :, :] * v_x_max_inv
+            self.dataset_tensor[:, 1, :, :] = self.dataset_tensor[:, 1, :, :] * v_y_max_inv
+            self.dataset_tensor[:, 2, :, :] = self.dataset_tensor[:, 2, :, :] * temp_max_inv
+
         if data_augmentation:
-            rand_rot_trans = RandomRotation(
-                180, interpolation=InterpolationMode.BILINEAR
-            )
+            rand_rot_trans = RandomRotation(180, interpolation=InterpolationMode.BILINEAR)
             crop_trans = CenterCrop(45)
             resize_trans = Resize((64, 64))
             trans = Compose([rand_rot_trans, crop_trans, resize_trans])
@@ -84,23 +92,14 @@ class MultiFolderDataset(Dataset):
         expects file path including "vel" part
         """
         # file_path = file_path_vel.replace("pflotran-new-vel-", "pflotran-new-")
-        file_path = file_path_vel.replace(
-            "pflotran-noFlow-new-vel", "pflotran-withFlow-new"
-        )
+        file_path = file_path_vel.replace("pflotran-noFlow-new-vel", "pflotran-withFlow-new")
         mesh = meshio.read(file_path_vel)
         data = meshio.read(file_path)
 
         ret_data = torch.empty([3, self.imsize, self.imsize], dtype=torch.float32)
         v_x = mesh.cell_data["Vlx"][0].reshape([self.imsize, self.imsize])
         v_y = mesh.cell_data["Vly"][0].reshape([self.imsize, self.imsize])
-        temp = (data.cell_data["Temperature"][0] - 10).reshape(
-            [self.imsize, self.imsize]
-        )
-
-        if self.normalize:
-            v_x = (v_x / v_x.max()) * 2.0 - 1.0
-            v_y = (v_y / v_y.max()) * 2.0 - 1.0
-            temp = (temp / temp.max()) * 2.0 - 1.0
+        temp = (data.cell_data["Temperature"][0] - temp_offset).reshape([self.imsize, self.imsize])
 
         ret_data[0, :, :] = torch.as_tensor(v_x, dtype=torch.float32)
         ret_data[1, :, :] = torch.as_tensor(v_y, dtype=torch.float32)
@@ -110,9 +109,7 @@ class MultiFolderDataset(Dataset):
 
 
 def get_single_example():
-    data_path = (
-        "/import/sgs.local/scratch/leiterrl/Geothermal-ML/PFLOTRAN-Data/noFlow_withFlow"
-    )
+    data_path = "/import/sgs.local/scratch/leiterrl/Geothermal-ML/PFLOTRAN-Data/noFlow_withFlow"
     mf_dataset = MultiFolderDataset([data_path + "/batch1"], data_augmentation=False)
 
     return mf_dataset[0]
