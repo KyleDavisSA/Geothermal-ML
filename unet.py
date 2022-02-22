@@ -20,26 +20,16 @@ class UNet(nn.Module):
 
         self.bottleneck = UNet._block(features * 8, features * 16, name="bottleneck")
 
-        self.upconv4 = nn.ConvTranspose2d(
-            features * 16, features * 8, kernel_size=2, stride=2
-        )
+        self.upconv4 = nn.ConvTranspose2d(features * 16, features * 8, kernel_size=2, stride=2)
         self.decoder4 = UNet._block((features * 8) * 2, features * 8, name="dec4")
-        self.upconv3 = nn.ConvTranspose2d(
-            features * 8, features * 4, kernel_size=2, stride=2
-        )
+        self.upconv3 = nn.ConvTranspose2d(features * 8, features * 4, kernel_size=2, stride=2)
         self.decoder3 = UNet._block((features * 4) * 2, features * 4, name="dec3")
-        self.upconv2 = nn.ConvTranspose2d(
-            features * 4, features * 2, kernel_size=2, stride=2
-        )
+        self.upconv2 = nn.ConvTranspose2d(features * 4, features * 2, kernel_size=2, stride=2)
         self.decoder2 = UNet._block((features * 2) * 2, features * 2, name="dec2")
-        self.upconv1 = nn.ConvTranspose2d(
-            features * 2, features, kernel_size=2, stride=2
-        )
+        self.upconv1 = nn.ConvTranspose2d(features * 2, features, kernel_size=2, stride=2)
         self.decoder1 = UNet._block(features * 2, features, name="dec1")
 
-        self.conv = nn.Conv2d(
-            in_channels=features, out_channels=out_channels, kernel_size=1
-        )
+        self.conv = nn.Conv2d(in_channels=features, out_channels=out_channels, kernel_size=1)
 
     def forward(self, x):
         enc1 = self.encoder1(x)
@@ -106,9 +96,7 @@ def weights_init(m):
         m.bias.data.fill_(0)
 
 
-def blockUNet(
-    in_c, out_c, name, transposed=False, bn=True, relu=True, size=4, pad=1, dropout=0.0
-):
+def blockUNet(in_c, out_c, name, transposed=False, bn=True, relu=True, size=4, pad=1, dropout=0.0):
     block = nn.Sequential()
     if relu:
         block.add_module("%s_relu" % name, nn.ReLU(inplace=True))
@@ -127,9 +115,7 @@ def blockUNet(
         # reduce kernel size by one for the upsampling (ie decoder part)
         block.add_module(
             "%s_tconv" % name,
-            nn.Conv2d(
-                in_c, out_c, kernel_size=(size - 1), stride=1, padding=pad, bias=True
-            ),
+            nn.Conv2d(in_c, out_c, kernel_size=(size - 1), stride=1, padding=pad, bias=True),
         )
     if bn:
         block.add_module("%s_bn" % name, nn.BatchNorm2d(out_c))
@@ -145,9 +131,7 @@ class TurbNetG(nn.Module):
         channels = int(2 ** channelExponent + 0.5)
 
         self.layer1 = nn.Sequential()
-        self.layer1.add_module(
-            "layer1_conv", nn.Conv2d(2, channels, 4, 2, 1, bias=True)
-        )
+        self.layer1.add_module("layer1_conv", nn.Conv2d(2, channels, 4, 2, 1, bias=True))
 
         self.layer2 = blockUNet(
             channels,
@@ -193,38 +177,38 @@ class TurbNetG(nn.Module):
             channels * 8,
             "layer5",
             transposed=False,
-            bn=True,
-            relu=False,
-            dropout=dropout,
-            size=2,
-            pad=0,
-        )
-        self.layer6 = blockUNet(
-            channels * 8,
-            channels * 8,
-            "layer6",
-            transposed=False,
             bn=False,
             relu=False,
             dropout=dropout,
             size=2,
             pad=0,
         )
+        # self.layer6 = blockUNet(
+        #     channels * 8,
+        #     channels * 8,
+        #     "layer6",
+        #     transposed=False,
+        #     bn=False,
+        #     relu=False,
+        #     dropout=dropout,
+        #     size=2,
+        #     pad=0,
+        # )
 
         # note, kernel size is internally reduced by one now
-        self.dlayer6 = blockUNet(
-            channels * 8,
-            channels * 8,
-            "dlayer6",
-            transposed=True,
-            bn=True,
-            relu=True,
-            dropout=dropout,
-            size=2,
-            pad=0,
-        )
+        # self.dlayer6 = blockUNet(
+        #     channels * 8,
+        #     channels * 8,
+        #     "dlayer6",
+        #     transposed=True,
+        #     bn=True,
+        #     relu=True,
+        #     dropout=dropout,
+        #     size=2,
+        #     pad=0,
+        # )
         self.dlayer5 = blockUNet(
-            channels * 16,
+            channels * 8,
             channels * 8,
             "dlayer5",
             transposed=True,
@@ -277,6 +261,7 @@ class TurbNetG(nn.Module):
             "dlayer1_tconv", nn.ConvTranspose2d(channels * 2, 1, 4, 2, 1, bias=True)
         )
 
+    # @torch.autocast("cuda")
     def forward(self, x):
         out1 = self.layer1(x)
         out2 = self.layer2(out1)
@@ -284,10 +269,11 @@ class TurbNetG(nn.Module):
         out3 = self.layer3(out2)
         out4 = self.layer4(out3)
         out5 = self.layer5(out4)
-        out6 = self.layer6(out5)
-        dout6 = self.dlayer6(out6)
-        dout6_out5 = torch.cat([dout6, out5], 1)
-        dout5 = self.dlayer5(dout6_out5)
+        # out6 = self.layer6(out5)
+        # dout6 = self.dlayer6(out6)
+        # dout6_out5 = torch.cat([dout6, out5], 1)
+        # dout5 = self.dlayer5(dout6_out5)
+        dout5 = self.dlayer5(out5)
         dout5_out4 = torch.cat([dout5, out4], 1)
         dout4 = self.dlayer4(dout5_out4)
         dout4_out3 = torch.cat([dout4, out3], 1)
@@ -299,3 +285,26 @@ class TurbNetG(nn.Module):
         dout2_out1 = torch.cat([dout2, out1], 1)
         dout1 = self.dlayer1(dout2_out1)
         return dout1
+
+    # def forward_simple(self, x):
+    #     out1 = self.layer1(x)
+    #     out2 = self.layer2(out1)
+    #     # out2b = self.layer2b(out2)
+    #     out3 = self.layer3(out2)
+    #     out4 = self.layer4(out3)
+    #     out5 = self.layer5(out4)
+    #     out6 = self.layer6(out5)
+    #     dout6 = self.dlayer6(out6)
+    #     dout6_out5 = torch.cat([dout6, out5], 1)
+    #     dout5 = self.dlayer5(dout6_out5)
+    #     dout5_out4 = torch.cat([dout5, out4], 1)
+    #     dout4 = self.dlayer4(dout5_out4)
+    #     dout4_out3 = torch.cat([dout4, out3], 1)
+    #     dout3 = self.dlayer3(dout4_out3)
+    #     dout3_out2 = torch.cat([dout3, out2], 1)
+    #     # dout2b = self.dlayer2b(dout3_out2b)
+    #     # dout2b_out2 = torch.cat([dout2b, out2], 1)
+    #     dout2 = self.dlayer2(dout3_out2)
+    #     dout2_out1 = torch.cat([dout2, out1], 1)
+    #     dout1 = self.dlayer1(dout2_out1)
+    #     return dout1
