@@ -17,6 +17,7 @@ from torchvision.transforms import RandomCrop, Resize, Compose, RandomRotation
 import torch
 import numpy as np
 import random
+import yaml
 
 from torch.utils.data.distributed import DistributedSampler
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -24,10 +25,27 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from utils import *
 
 # model_dir = "runs/run"
-base_dir = "/data/scratch/leiterrl/geoml"
-cache_dir = "/data/scratch/leiterrl/"
+# scratch_dir = "/scratch/sc/"
+scratch_dir = "/data/scratch/"
+base_dir = scratch_dir + "leiterrl/geoml"
+cache_dir = scratch_dir + "leiterrl/"
 use_cache = True
 distributed_training = True
+
+with open("train.yml", "r") as stream:
+    config = yaml.safe_load(stream)
+
+# PARAMETERS
+lra = config["lra"]
+data_augmentation = config["data_augmentation"]
+n_epochs = config["n_epochs"]
+lr = config["lr"]
+res_loss_weight = config["res_loss_weight"]
+lra_alpha = config["lra_alpha"]
+channelExponent = config["channelExponent"]
+batch_size = config["batch_size"]
+write_freq = config["write_freq"]
+physical_loss = config["physical_loss"]
 
 
 def augment_data(input, target):
@@ -44,9 +62,7 @@ def augment_data(input, target):
 
 
 # data_path = "/import/sgs.local/scratch/leiterrl/Geothermal-ML/PFLOTRAN-Data/generated/SingleDirection"
-data_path = (
-    "/import/sgs.local/scratch/leiterrl/Geothermal-ML/PFLOTRAN-Data/noFlow_withFlow"
-)
+data_path = "/import/sgs.local/scratch/leiterrl/Geothermal-ML/PFLOTRAN-Data/noFlow_withFlow"
 
 
 if not use_cache:
@@ -130,6 +146,8 @@ def run_epoch(rank, world_size):
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     model_dir = base_dir + "_turbnet_rot_lr_phys" + timestamp
     writer = SummaryWriter(model_dir, flush_secs=10)
+    with open(os.path.join(model_dir, "train.yml"), "w") as yml_file:
+        yaml.dump(config, yml_file)
 
     # model = DenseED(
     #     in_channels=2,
@@ -145,18 +163,9 @@ def run_epoch(rank, world_size):
 
     # model = UNet(in_channels=2, out_channels=1)
 
-    # PARAMETERS
-    lra = False
-    data_augmentation = False
-    n_epochs = 100000
-    lr = 1e-3
-    res_loss_weight = 0.001
-    # res_loss_weight = 1.0
-    lra_alpha = 0.9
-    channelExponent = 5
-
     model = TurbNetG(channelExponent=channelExponent)
     model.to(rank)
+
     if distributed_training:
         model = DDP(model, device_ids=[rank])
     # print(model)
@@ -178,16 +187,15 @@ def run_epoch(rank, world_size):
     postfix_dict = {
         "loss": "",
         "t_loss": "",
-        "lr": "NaN",
+        "rel_err": "",
+        # "lr": "NaN",
         "pde": "NaN",
         "dir": "NaN",
-        "neu": "NaN",
+        # "neu": "NaN",
     }
 
     if rank == 0 or not distributed_training:
-        progress_bar = tqdm(
-            desc="Epoch: ", total=n_epochs, postfix=postfix_dict, delay=0.5
-        )
+        progress_bar = tqdm(desc="Epoch: ", total=n_epochs, postfix=postfix_dict, delay=0.5)
     else:
         progress_bar = None
 
@@ -245,7 +253,7 @@ def run_epoch(rank, world_size):
             # scheduler.step()
             iteration += 1
 
-        if epoch % 1000 == 0:
+        if epoch % write_freq == 0:
             model.eval()
             for test_batch_idx, test_sample in enumerate(test_data_loader):
                 test_input = test_sample[0].to(rank)
@@ -280,7 +288,7 @@ def run_epoch(rank, world_size):
 
         if (rank == 0 or not distributed_training) and progress_bar:
             writer.add_scalar("loss", loss, epoch)
-            postfix_dict["dir"] = f"{mse_loss:.5f}"
+            # postfix_dict["dir"] = f"{mse_loss:.5f}"
             # postfix_dict["pde"] = f"{res_loss:.5f}"
             postfix_dict["loss"] = f"{loss:.5f}"
             # postfix_dict["lr"] = f"{scheduler.get_last_lr()[0]:.5f}"
