@@ -262,10 +262,14 @@ def run_epoch(rank, world_size):
                     test_input, test_target = augment_data(test_input, test_target)
 
                 test_output = model(test_input)
+                # test_output = model.module.forward_simple(test_input)
                 test_loss = loss_fn(test_output, test_target)
+                test_rel_error = (test_output - test_target).abs().sum() / test_target.abs().sum()
             if rank == 0 or not distributed_training:
                 postfix_dict["t_loss"] = f"{test_loss:.5f}"
+                postfix_dict["rel_err"] = f"{test_rel_error:.5f}"
                 writer.add_scalar("test_loss", test_loss, epoch)
+                writer.add_scalar("rel_err", test_rel_error, epoch)
                 writer.add_figure(
                     "comp",
                     plot_multi_comparison(test_input, test_output, test_target),
