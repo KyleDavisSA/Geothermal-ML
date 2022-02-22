@@ -68,47 +68,85 @@ Address \\
 \label{sec:intro}
 
 Heating and cooling of buildings has garnered attention in recent years, especially as the world moves towards renewable sources of energy. 
-It is estimated up to three quarters of the worlds fossil fuels used in buildings goes towards heating (The Economist).
+%It is estimated up to three quarters of the worlds fossil fuels used in buildings goes towards heating (The Economist).
 %In a world moving towards renewables ernergy as main 
-One focus recently has been on grounwater based heat pumps \cite{Halilovic2022}, utlizing shallow geothermal energy.
+One focus recently has been on using grounwater heat pumps (GWHP) \cite{Halilovic2022}, utlizing the shallow geothermal energy. 
+As the grounwater temperature is relatively stable year round, GWHP's are able to use this source to both heat and cool buildings. %(https://www.energy.gov/energysaver/geothermal-heat-pumps) 
 
-One crucial development of the past decade to achieve this is the widespread adoption of more energy efficient and carbon-free techniques for heating and cooling urban buildings.
-A central role plays the usage of heatpumps extracting energy from subsurface groundwater 
+As cities move towards installing more GWHP's, assessing and optimizing their influence on the subsurface is required. 
+Installing these without any restrictions could result in situations where negative interaction occurs \cite{Garcia2020, Daemi2019}. 
+Due to the operation of a GWHP, the local temperature around the GWHP changes, and a thermal plume develops due to the diffusion and advection of this water in the subsurface. 
+This thermal plume can propogate downstream and interact with other GWHP's, causing interference. 
+This requires careful planning of the layout and operational loads of GWHP's \cite{Beck2013}. 
+To provide an accurate assessment of the groundwater temperatures due to the usage of many heat pumps, high-fidelity subsurface flow simulations are required \cite{Menga2019}. 
+Furthermore, to optimize the layout and usage of a large number of GWHP's on this scale requires many high-fidelity simulation runs, making very large models infeasible.
 
-Establishing this technology on a large city-wide scale however, requires some regulatory oversight for the locations and energetic dimensions of installed heatpumps.
-Installing these without any restrictions might result in situations where the heat injection/substraction from one pump might negatively impact the performance of another pump down-stream.
+A common solution is to use low-fidelity models to solve an expensive optimization problem \cite{Sbai2019, Nagoor2019, Robinson2012}. 
+To help optimize the layout of potentially thousands of GWHP's, low-fidelity models could be used to determine the local influence that each GWHP has on the groundwater temperature. 
+As the thermal influence of one heat pump can be computed fast and cheaply, many such evaluations can be performed to determine the influence of multiple heat pumps in a system. 
+This can be used to provide either a semi-optimised solution, or to evaluate the influence of one heat pump on other previously installed heat pumps. 
 
-In a first step to address this optimization problem this work aims at providing a web-based tool for city planners to quickly test out different placement scenarios.
-Using a machine learning surrogates we want to predict physically accurate temperature fields in real-time based in the users input and measured groundwater flow fields of a large European city.
+To determine the local temperature variation due to a heat pump, we need to model the local temperature variation that develops, i.e. determine the thermal plume. 
+Analytical solutions provide a computationally cheap solution \cite{Pophillat2020}, but suffer from several disadvantages. 
+The analytical solutions do not account for variations in the groundwater parameters in space, i.e. varying permeability, pressure gradients and velocity fields to name a few.
+This results in the thermal plume extending in one direction only for the analytical solutions, however, the thermal plumes may change their direction with heterogenous groundwater parameters. 
 
-- general motivation (large scale heatpump adoption requires optimization of placements etc.)
-\begin{enumerate}
-\item The large scale roll-out of shallow groundwater heat pumps often results in thermal interference of the installed heat pumps.
-\item This requires optimization of placement and usage of heat pumps to manage the subsurface thermal resource.
-\item Current analytical formulas are too simplistic.
-\end{enumerate}
 
-- geokw project outline (possibly de-anonymizing?) \\
-KD: We can remove GeoKW and I can explain the project. The web-app isnt live so they wouldn't be able to find it.
+%One crucial development of the past decade to achieve this is the widespread adoption of more energy efficient and carbon-free techniques for heating and cooling urban buildings.
+%A central role plays the usage of heatpumps extracting energy from subsurface groundwater 
 
-- specific application in web-based real-time context -> requires fast online evaluation
-\begin{enumerate}
-\item Specific application is the optimization, as this is crazy expensive. Try to reduce computational time of the optimization.
-\item Second application is a web-based planning tool, which gives energy planners an easy tool to assess compatability.
-\end{enumerate}
+%Establishing this technology on a large city-wide scale however, requires some regulatory oversight for the locations and energetic dimensions of installed heatpumps.
+%Installing these without any restrictions might result in situations where the heat injection/substraction from one pump might negatively impact the performance of another pump down-stream.
+
+%In a first step to address this optimization problem this work aims at providing a web-based tool for city planners to quickly test out different placement scenarios.
+%Using a machine learning surrogates we want to predict physically accurate temperature fields in real-time based in the users input and measured groundwater flow fields of a large European city.
+
+%- general motivation (large scale heatpump adoption requires optimization of placements etc.)
+%\begin{enumerate}
+%\item The large scale roll-out of shallow groundwater heat pumps often results in thermal interference of the installed heat pumps.
+%\item This requires optimization of placement and usage of heat pumps to manage the subsurface thermal resource.
+%\item Current analytical formulas are too simplistic.
+%\end{enumerate}
+
+%- geokw project outline (possibly de-anonymizing?) \\
+%KD: We can remove GeoKW and I can explain the project. The web-app isnt live so they wouldn't be able to find it.
+
+%- specific application in web-based real-time context -> requires fast online evaluation
+%\begin{enumerate}
+%\item Specific application is the optimization, as this is crazy expensive. Try to reduce computational time of the optimization.
+%\item Second application is a web-based planning tool, which gives energy planners an easy tool to assess compatability.
+%\end{enumerate}
 
 \textbf{Related Work}
 
-Developing machine learning surrogates for physical applications has seen a lot of development in recent years.
-Equally the number of different approaches is quite diverse.
-One of these are physics-informed methods where a neural network (NN) is trained to approximate the solution of a specific boundary-value problem \cite{pinn}.
-This works by adding the PDE residual of the underlying equations to the loss function and thus optimizing the network for solutions which obey the underlying physical laws.
+Machine learning based surrogates for physical applications has increased dramatically in recent years \cite{Vinuesa2021,Laubscher2021,Chen2021,Zhu2019}. 
+%Equally the number of different approaches is quite diverse.
+A popular method is the physics-informed neural networks (PINN), where a neural network is not trained using typical data sources, but trained such that the PINN output must satisfy some specific boundary-value problem \cite{pinn}. 
+The partial differential equation (PDE) residual is added to the neural network loss function, and the network is trained to minimize this residual value, and therefore, the PINN output should satisfy the underlying physical laws of the PDE.
+%One of these are physics-informed methods where a neural network (NN) is trained to approximate the solution of a specific boundary-value problem \cite{pinn}.
+%This works by adding the PDE residual of the underlying equations to the loss function and thus optimizing the network for solutions which obey the underlying physical laws.
 Other approaches such as CFDNet \cite{cfdnet} include an NN surrogate as a pre-conditioner inside a traditional numerical solver.
 
 \section{Method}
 \label{sec:method}
 
+In this section we describe the model setup and data generation. 
+
+\subsection{Optimization Problem}
+
+Our aim is to develop a neural network that uses the groundwater parameters as in input, and outputs the thermal plume due to an added heat pump to the domain. 
+Our optimization problem consists of a large area, with known input parameters: permeability field and pressure boundary conditions. 
+We solve for the boundary value problem using a finite volumn solver to determine 
+
+However careful selection of input parameters is needed to be a viable input for our optimization problem.  Therefore, we can determine the initial state of our domain by solving for the 
+
+Hence, we use the steady-state darcy velocity field for  
+
+
+
 \subsection*{Dataset Description}
+
+In order to train the neural network, we need to provide enough training data the varying pe
 \todo{to train fast surrogate we need data}
 
 \todo{data is generated using FV solver pflotran for different configurations}
