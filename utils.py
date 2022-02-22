@@ -1,4 +1,3 @@
-
 import os
 import torch
 import torch.multiprocessing as mp
@@ -10,6 +9,7 @@ def setup(rank, world_size):
     os.environ["MASTER_PORT"] = "12355"
 
     # initialize the process group
+    os.environ["NCCL_ASYNC_ERROR_HANDLING"] = "0"
     dist.init_process_group("gloo", rank=rank, world_size=world_size)
 
 
@@ -19,6 +19,7 @@ def cleanup():
 
 def run_parallel(train_fn, world_size):
     mp.spawn(train_fn, args=(world_size,), nprocs=world_size, join=True)
+
 
 def compute_loss_grads(network: torch.nn.Module, loss: torch.Tensor):
     loss.backward(retain_graph=True)
