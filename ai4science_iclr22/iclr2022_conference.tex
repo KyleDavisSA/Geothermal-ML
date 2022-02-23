@@ -15,6 +15,7 @@
 \usepackage{tikz}
 \usepackage{caption}
 \usepackage{subcaption}
+\usepackage{gensymb}
 
 \definecolor{blue1}{RGB}{0,102,189}
 \definecolor{blue2}{RGB}{98,160,214}
@@ -283,8 +284,8 @@ with the energy source term $Q_e$, enthalpy $H$, thermal conductivity $\kappa$ a
 \todo{as surrogate we use a TurbNet structure}
 \begin{figure}[htb]
    \centering
-   \includegraphics[width=\textwidth]{img/arch.pdf}
-   \caption{Visualization of the network architecture. The encode and decoder paths feature a 2d convolutions with a kernlsize of $4$. Both paths are connected via skip connections in each level.}
+   \includegraphics[width=0.8\textwidth]{img/arch.pdf}
+   \caption{Visualization of the network architecture. The encode and decoder paths feature a 2d convultions with a kernlsize of $4$. Both paths are connected via skip connections in each level.}
    \label{fig:arch}
 \end{figure}
 
@@ -354,7 +355,7 @@ These residuals are then added to the loss function of the optimizer.
       \includegraphics[width=\textwidth]{img/96_comparison.png}
       \vspace{-1cm}
    \end{subfigure}
-   \caption{Prediction and simulation groundtruth for three different samples from the test dataset. The rightmost column displays the absolute error in C°.}
+   \caption{Prediction and simulation groundtruth for three different samples from the test dataset. The rightmost column displays the absolute error in \degree C.}
 \end{figure}
 
 
