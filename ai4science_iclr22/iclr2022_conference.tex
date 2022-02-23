@@ -7,6 +7,7 @@
 
 \usepackage{hyperref}
 \usepackage{url}
+% \usepackage{subfig}
 \usepackage{graphicx}
 \usepackage{cleveref}
 \usepackage{todonotes}
@@ -337,6 +338,24 @@ These residuals are then added to the loss function of the optimizer.
 \end{figure}
 
 \todo{- evaluation (error on test set, inference time)}
+
+
+\begin{figure}[htb]
+   \centering
+   \begin{subfigure}{0.9\textwidth}
+      \includegraphics[width=\textwidth]{img/22_comparison.png}
+      \vspace{-1cm}
+   \end{subfigure}
+   \begin{subfigure}{0.9\textwidth}
+      \includegraphics[width=\textwidth]{img/28_comparison.png}
+      \vspace{-1cm}
+   \end{subfigure}
+   \begin{subfigure}{0.9\textwidth}
+      \includegraphics[width=\textwidth]{img/42_comparison.png}
+      \vspace{-1cm}
+   \end{subfigure}
+   \caption{Prediction and simulation groundtruth for three different samples from the test dataset. The rightmost column displays the absolute error in C°.}
+\end{figure}
 
 
 \begin{figure}[htb]
