@@ -7,6 +7,7 @@
 
 \usepackage{hyperref}
 \usepackage{url}
+% \usepackage{subfig}
 \usepackage{graphicx}
 \usepackage{cleveref}
 \usepackage{todonotes}
@@ -327,6 +328,8 @@ These residuals are then added to the loss function of the optimizer.
 \item Simulate this with added heat flux to determine temperatures
 \end{enumerate}
 
+\todo{preprocessing}
+
 \todo{- model setup}
 \begin{figure}[htb]
    \centering
@@ -339,10 +342,36 @@ These residuals are then added to the loss function of the optimizer.
 
 \begin{figure}[htb]
    \centering
+   \begin{subfigure}{0.9\textwidth}
+      \includegraphics[width=\textwidth]{img/22_comparison.png}
+      \vspace{-1cm}
+   \end{subfigure}
+   \begin{subfigure}{0.9\textwidth}
+      \includegraphics[width=\textwidth]{img/28_comparison.png}
+      \vspace{-1cm}
+   \end{subfigure}
+   \begin{subfigure}{0.9\textwidth}
+      \includegraphics[width=\textwidth]{img/42_comparison.png}
+      \vspace{-1cm}
+   \end{subfigure}
+   \caption{Prediction and simulation groundtruth for three different samples from the test dataset. The rightmost column displays the absolute error in C°.}
+\end{figure}
+
+
+\begin{figure}[htb]
+   \centering
    \includegraphics[width=10cm,height=6cm]{example-image-a}
    \caption{Example screenshot of a web app showing multiple hand placed heatpumps on a city map with heat plumes being generated using the surrogate model.}
 \end{figure}
 \todo{- overlay of local surrogates on city map (?)}
+
+\begin{figure}[htb]
+   \centering
+   \includegraphics[width=10cm,height=6cm]{example-image-a}
+   \caption{Training progress of the model. Displayed are the total $L_2$ loss and relative error over $n=6000$ epochs.}
+\end{figure}
+
+For further details of the training process see 
 
 \section{Conclusion}
 \label{sec:conclusion}
@@ -366,5 +395,10 @@ To deal with this another extension could be stitching together multiple local s
 \appendix
 \section{Appendix}
 You may include other additional sections here.
+
+\section{Training Details}
+The model was traing using PyTorch \citep{pytorch} on a workstation with two NVIDIA RTX 3090 GPUs. The batchsize was fixed at $512$ data points and the ADAM optimizer was used with a learning rate of $1e-3$.
+The code is available at...
+\todo{add anonymous github repository}
 
 \end{document}
