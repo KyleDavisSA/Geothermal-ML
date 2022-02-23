@@ -11,6 +11,20 @@
 \usepackage{cleveref}
 \usepackage{todonotes}
 \setuptodonotes{inline}
+\usepackage{tikz}
+
+\definecolor{blue1}{RGB}{0,102,189}
+\definecolor{blue2}{RGB}{98,160,214}
+\definecolor{my_orange}{RGB}{243,98,33}
+\definecolor{mygreen}{RGB}{30,106,57}
+\definecolor{mypurple}{RGB}{91,39,125}
+\definecolor{myred}{RGB}{241,13,12}
+
+\def\boxit#1{%
+  \smash{\color{black}\fboxrule=1pt\relax\fboxsep=2pt\relax%
+  \llap{\rlap{\fbox{\vphantom{0}\makebox[#1]{}}}~}}\ignorespaces
+}
+\input{tikzstyles.tex}
 
 
 \title{Formatting Instructions for ICLR 2022 \\ Conference Submissions}
@@ -74,25 +88,32 @@ One focus recently has been on using grounwater heat pumps (GWHP) \cite{Halilovi
 As the grounwater temperature is relatively stable year round, GWHP's are able to use this source to both heat and cool buildings. %(https://www.energy.gov/energysaver/geothermal-heat-pumps) 
 
 As cities move towards installing more GWHP's, assessing and optimizing their influence on the subsurface is required. 
-Installing these without any restrictions could result in situations where negative interaction occurs \cite{Garcia2020, Daemi2019}. 
+Installing teh GWHP's without any restrictions could result in situations where negative interaction occurs \cite{Garcia2020, Daemi2019}. 
+GWHP's operate by extracting water from an extraction well, either heating or cooling this fluid, and reinjecting this fluid back into the subsurface.  
 Due to the operation of a GWHP, the local temperature around the GWHP changes, and a thermal plume develops due to the diffusion and advection of this water in the subsurface. 
-This thermal plume can propogate downstream and interact with other GWHP's, causing interference. 
+This thermal plume can propogate downstream and interact with other GWHP's or even recirculate into its own extraction well, causing interference. 
 This requires careful planning of the layout and operational loads of GWHP's \cite{Beck2013}. 
-To provide an accurate assessment of the groundwater temperatures due to the usage of many heat pumps, high-fidelity subsurface flow simulations are required \cite{Menga2019}. 
-Furthermore, to optimize the layout and usage of a large number of GWHP's on this scale requires many high-fidelity simulation runs, making very large models infeasible.
+To provide an accurate assessment of the groundwater temperatures due to the usage of many heat pumps, high-fidelity subsurface flow simulations are required \cite{Meng2019}. 
+Furthermore, to optimize the layout and usage of a large number of GWHP's on this scale requires many high-fidelity simulation runs, making large optimization scenarios infeasible.
 
-A common solution is to use low-fidelity models to solve an expensive optimization problem \cite{Sbai2019, Nagoor2019, Robinson2012}. 
-To help optimize the layout of potentially thousands of GWHP's, low-fidelity models could be used to determine the local influence that each GWHP has on the groundwater temperature. 
+A common solution is to use low-fidelity, computationally cheap model to solve the optimization problem \cite{Sbai2019, Nagoor2019, Robinson2012}. 
+To help optimize the layout of potentially thousands of GWHP's, low-fidelity models could be used to determine the local temperature influence that each GWHP has on the groundwater temperature. 
 As the thermal influence of one heat pump can be computed fast and cheaply, many such evaluations can be performed to determine the influence of multiple heat pumps in a system. 
 This can be used to provide either a semi-optimised solution, or to evaluate the influence of one heat pump on other previously installed heat pumps. 
 
-To determine the local temperature variation due to a heat pump, we need to model the local temperature variation that develops, i.e. determine the thermal plume. 
+We need to model the local temperature variation that develops, i.e. determine the thermal plume. 
 Analytical solutions provide a computationally cheap solution \cite{Pophillat2020}, but suffer from several disadvantages. 
-The analytical solutions do not account for variations in the groundwater parameters in space, i.e. varying permeability, pressure gradients and velocity fields to name a few.
-This results in the thermal plume extending in one direction only for the analytical solutions, however, the thermal plumes may change their direction with heterogenous groundwater parameters. 
+The analytical solutions do not account for variations in the groundwater parameters in space, such as varying permeability field, pressure gradients and velocity fields. 
+This results in the thermal plume extending in one direction only for the analytical solutions, however, the thermal plumes may change their direction due to heterogenous groundwater parameters. 
 
+\begin{figure}
+\centering
+\includegraphics[width=0.5\textwidth]{analyticalPlume.png}
+\caption{The thermal plume developed by a GWHP derived from the LAHM model. The thermal plume is uni-directional, and is dependent only on the parameters at the location of reinjection, and does not account for varying parameters elsewhere in the domain.}
+\label{analyticalPlume}
+\end{figure}
 
-%One crucial development of the past decade to achieve this is the widespread adoption of more energy efficient and carbon-free techniques for heating and cooling urban buildings.
+%One crucial development of the past decade to achieve this is the widespread adoptioln of more energy efficient and carbon-free techniques for heating and cooling urban buildings.
 %A central role plays the usage of heatpumps extracting energy from subsurface groundwater 
 
 %Establishing this technology on a large city-wide scale however, requires some regulatory oversight for the locations and energetic dimensions of installed heatpumps.
@@ -122,10 +143,10 @@ This results in the thermal plume extending in one direction only for the analyt
 Machine learning based surrogates for physical applications has increased dramatically in recent years \cite{Vinuesa2021,Laubscher2021,Chen2021,Zhu2019}. 
 %Equally the number of different approaches is quite diverse.
 A popular method is the physics-informed neural networks (PINN), where a neural network is not trained using typical data sources, but trained such that the PINN output must satisfy some specific boundary-value problem \cite{pinn}. 
-The partial differential equation (PDE) residual is added to the neural network loss function, and the network is trained to minimize this residual value, and therefore, the PINN output should satisfy the underlying physical laws of the PDE.
+In the case of a partial differential equation (PDE), the residual is added to the neural network loss function, and the network is trained to minimize this residual. Therefore, the PINN output should satisfy the underlying physical laws of the PDE. 
 %One of these are physics-informed methods where a neural network (NN) is trained to approximate the solution of a specific boundary-value problem \cite{pinn}.
 %This works by adding the PDE residual of the underlying equations to the loss function and thus optimizing the network for solutions which obey the underlying physical laws.
-Other approaches such as CFDNet \cite{cfdnet} include an NN surrogate as a pre-conditioner inside a traditional numerical solver.
+Other approaches such as CFDNet \cite{cfdnet} include an NN surrogate as a pre-conditioner inside a traditional numerical solver, whereas other works utilise PINN's to provide error correction for coarse scale models \cite{Gao2021}.
 
 \section{Method}
 \label{sec:method}
@@ -134,22 +155,82 @@ In this section we describe the model setup and data generation.
 
 \subsection{Optimization Problem}
 
-Our aim is to develop a neural network that uses the groundwater parameters as in input, and outputs the thermal plume due to an added heat pump to the domain. 
-Our optimization problem consists of a large area, with known input parameters: permeability field and pressure boundary conditions. 
-We solve for the boundary value problem using a finite volumn solver to determine 
+Our optimization problem consists of a large area, with known input parameters: spatially varying permeability field and pressure boundary conditions. 
+We solve for the boundary value problem using a finite volumn subsurface solver to determine the pressure field, velocity field and temperature field. 
+However, we assume that the velocity field is is only locally influenced by a GWHP, and we can therefore run our model without any GWHP's installed to determine an initial pressure and velocity field.  
+We also assume that the subsurface temperature is domniated by the advection term in the darcy flow equations.  
 
-However careful selection of input parameters is needed to be a viable input for our optimization problem.  Therefore, we can determine the initial state of our domain by solving for the 
-
-Hence, we use the steady-state darcy velocity field for  
-
-
+Therefore, our aim is to develop a neural network that uses the spatially varying, steady-state groundwater velocity field as in input, and outputs the thermal plume that develops due to the additional of a GWHP to the domain. 
+%If we need to optimize the locations of heat pumps throughout a city, then an initial baseline simulation can be run, and the initial velocity field of the city can be obtained. 
+%Snapshots from this velocity field can be used to train the neural network, and an optimization procedure can be run to determine the thermal interference of thousands of combinations of heat pumps. 
 
 \subsection*{Dataset Description}
 
-In order to train the neural network, we need to provide enough training data the varying pe
-\todo{to train fast surrogate we need data}
+In order to train the neural network, we need to provide enough training data such that the thermal plume can be accurately captured. We use PFLOTRAN to perform the high-fidelity subsurface simulations \cite{pflotran-paper}. We consider a 2D domain with directions $x$ and $y$, and darcy velocities $q_x$ and $q_y$. The darcy velocities are used as inputs to the neural network. The training data simulations are performed on a 64x64 grid with 4096 cells, covering an area of 128$m$ $\times$ 128$m$ $\times$ 1$m$. 
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=2, every node/.style={font=\small}]
+
+\coordinate(origin) at (0,0);
+
+\coordinate(fluidWidth) at (2,0);
+\coordinate(fluidHeight) at (0,2);
+
+\coordinate(fluidBottomLeft) at ($(origin)$);
+\coordinate(fluidTopRight) at ($(origin) + (fluidWidth) + (fluidHeight)$);
+
+\draw[fill=participantBcolor!50](fluidBottomLeft) rectangle (fluidTopRight);
+
+\dimline[extension start length=0, extension end length=0] {($(0,2)+(0,.21)$)}{($(2,2)+(0,.21)$)}{$L$};
+%\dimline[extension start length=0, extension end length=0] {($(0,0)+(-0.21,0)$)}{($(0,2)+(-0.21,0)$)}{$L$};
+
+\draw($(0.05,0.98)$) -- node[right, black, align=right]{$\Gamma_\text{inlet}$} ($(0.05,0.98)$);  % inlet
+\draw($(0.85,0.15)$) -- node[right, black, align=right]{$\Gamma_\text{inlet}$} ($(0.85,0.15)$);  % inlet
+\draw($(1.5,0.98)$) -- node[right, black, align=right]{$\Gamma_\text{outlet}$} ($(1.5,0.98)$);  % outlet
+\draw($(0.855,1.78)$) -- node[right, black, align=right]{$\Gamma_\text{outlet}$} ($(0.85,1.78)$);  % outlet
+%\draw($(1.4,0.07)$) -- node[right, black, align=right]{$\Gamma_\text{no-slip}$} ($(1.4,0.07)$);  % no-slip
+%\draw($(0.85,0.31)$) -- node[right, black, align=right]{Fluid} ($(0.85,0.31)$);  % fluid
+%\draw($(0.85,0.56)$) -- node[right, black, align=right]{Solid} ($(0.85,0.56)$);  % solid
+%\draw($(0.85,-0.06)$) -- node[right, black, align=right]{Solid} ($(0.85,-0.06)$);  % solid
+%\draw [thick,dash dot] (-0.05,0.25) -- (2.1,0.25);
+
+
+\end{tikzpicture}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics[width=0.5\textwidth]{perm_example.png}
+\caption{Example permeability input field}
+\label{perm_example}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics[width=0.5\textwidth]{pressure_example.png}
+\caption{Example pressure input field}
+\label{pressure_example}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics[width=0.5\textwidth]{temp_example.png}
+\caption{Example temperature output field}
+\label{temp_example}
+\end{figure}
+
+%\todo{to train fast surrogate we need data}
 
 \todo{data is generated using FV solver pflotran for different configurations}
+
+The training is generated by varying the permeability field and pressure boundary conditions to generate "randomly" varying velocity fields. The permeability field is generated by using the python library \textit{random} to randomly assign values between $(-1 , 1)$ at various points on a square grid throughout the domain. These values are then mapped using the radial basis function interpolation method, using thin-plate-splines basis functions. These values are then rescaled and converted into the log format for the permeability fields. And example permeability field in shown in Fig.~\ref{temp_example}.
+
+The pressure gradient applied to the domain is also generated using the \textit{random} library in python. Two random values for the $x$ and $y$ direction gradient is applied. Only positive gradient values are applied in the $x$ direction $(0 , 1)$, whereas the $y$ direction is allowed to vary between $(-1 , 1)$. This generate velocity fields in the positive $x$ direction only, however we can rotate the data during training. 
+
+This allows us to generate many varying velocity fields, and due to the small size of the FV solver, the simulations are computationally cheap.
+
+
 
 \todo{underlying equations are the (stationary) Richards flow equations}
 
