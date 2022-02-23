@@ -99,13 +99,13 @@ This requires careful planning of the layout and operational loads of GWHP's \ci
 To provide an accurate assessment of the groundwater temperatures due to the usage of many heat pumps, high-fidelity subsurface flow simulations are required \cite{Meng2019}. 
 Furthermore, to optimize the layout and usage of a large number of GWHP's on this scale requires many high-fidelity simulation runs, making large optimization scenarios infeasible.
 
-A common solution is to use low-fidelity, computationally cheap model to solve the optimization problem \cite{Sbai2019, Nagoor2019, Robinson2012}. 
-To help optimize the layout of potentially thousands of GWHP's, low-fidelity models could be used to determine the local temperature influence that each GWHP has on the groundwater temperature. 
+A common solution is to use surrogate models, also known as low-fidelity models, which are computationally cheap to solve the optimization problem \cite{Sbai2019, Nagoor2019, Robinson2012}. 
+To help optimize the layout of potentially thousands of GWHP's, surrogate models could be used to determine the local temperature influence that each GWHP has on the groundwater temperature. 
 As the thermal influence of one heat pump can be computed fast and cheaply, many such evaluations can be performed to determine the influence of multiple heat pumps in a system. 
 This can be used to provide either a semi-optimised solution, or to evaluate the influence of one heat pump on other previously installed heat pumps. 
 
 We need to model the local temperature variation that develops, i.e. determine the thermal plume. 
-Analytical solutions proimage1vide a computationally cheap solution \cite{Pophillat2020}, but suffer from several disadvantages. 
+Analytical solutions provide a computationally cheap solution \cite{Pophillat2020}, but suffer from several disadvantages. 
 The analytical solutions do not account for variations in the groundwater parameters in space, such as varying permeability field, pressure gradients and velocity fields. 
 This results in the thermal plume extending in one direction only for the analytical solutions, however, the thermal plumes may change their direction due to heterogenous groundwater parameters. 
 
@@ -114,16 +114,16 @@ This results in the thermal plume extending in one direction only for the analyt
 \begin{subfigure}{.5\textwidth}
   \centering
   \includegraphics[width=.8\linewidth]{analyticalPlume.png}
-  \caption{Permeability Field}
+  \caption{Analytical thermal plume}
   \label{analyticalPlume}
 \end{subfigure}%
 \begin{subfigure}{.5\textwidth}
   \centering
-  \includegraphics[width=.8\linewidth]{large_temp_example.png}
-  \caption{Pressure Field}
+  \includegraphics[width=.8\linewidth]{large_temp_example_2.png}
+  \caption{Temperature of 10 GWHP's}
   \label{large_example}
 \end{subfigure}
-\caption{The thermal plume developed by a GWHP derived from the LAHM model. The thermal plume is uni-directional, and is dependent only on the parameters at the location of reinjection, and does not account for varying parameters elsewhere in the domain.}
+\caption{The thermal plume developed by (a) GWHP derived from the LAHM model and (b) 10 GWHP's in a large domain using a spatially varying permeability field. The thermal plume in (a) is uni-directional for the analytical model, and is dependent only on the parameters at the location of reinjection. A more realistic example in (b) shows that the thermal plumes follow the velocity direction of the subsurface.}
 \label{fig:test}
 \end{figure}
 
@@ -153,34 +153,34 @@ This results in the thermal plume extending in one direction only for the analyt
 %\end{enumerate}
 
 %\textbf{Related Work}
+The optimization problem consists of a large area (such as in Fig.~\ref{large_example}), with known input parameters: spatially varying permeability field and pressure boundary conditions. 
+The surrogate model would be able to provide the local temperature variation around each GWHP (Fig.~\ref{fig:sub1_temp}), and we can determine which GWHP's might interact with each other.
 
-Machine learning based surrogates for physical applications has increased dramatically in recent years \cite{Vinuesa2021,Laubscher2021,Chen2021,Zhu2019}. 
-%Equally the number of different approaches is quite diverse.
-A popular method is the physics-informed neural networks (PINN), where a neural network is not trained using typical data sources, but trained such that the PINN output must satisfy some specific boundary-value problem \cite{pinn}. 
-In the case of a partial differential equation (PDE), the residual is added to the neural network loss function, and the network is trained to minimize this residual. Therefore, the PINN output should satisfy the underlying physical laws of the PDE. 
-%One of these are physics-informed methods where a neural network (NN) is trained to approximate the solution of a specific boundary-value problem \cite{pinn}.
-%This works by adding the PDE residual of the underlying equations to the loss function and thus optimizing the network for solutions which obey the underlying physical laws.
-Other approaches such as CFDNet \cite{cfdnet} include an NN surrogate as a pre-conditioner inside a traditional numerical solver, whereas other works utilise PINN's to provide error correction for coarse scale models \cite{Gao2021}.
 
 \section{Method}
 \label{sec:method}
 
 In this section we describe the model setup and data generation. 
+Machine learning based surrogates for physical applications has increased dramatically in recent years \cite{Vinuesa2021,Laubscher2021,Chen2021,Zhu2019,Thuerey2019}. 
+%Equally the number of different approaches is quite diverse.
+A popular method is the physics-informed neural networks (PINN), where a neural network is not trained using typical data sources, but trained such that the PINN output must satisfy some specific boundary-value problem \cite{pinn}. 
+In the case of a partial differential equation (PDE), the residual is added to the neural network loss function, and the network is trained to minimize this residual. Therefore, the PINN output should satisfy the underlying physical laws of the PDE. 
+%One of these are physics-informed methods where a neural network (NN) is trained to approximate the solution of a specific boundary-value problem \cite{pinn}.
+%This works by adding the PDE residual of the underlying equations to the loss function and thus optimizing the network for solutions which obey the underlying physical laws.
+Other approaches such as CFDNet \cite{cfdnet} include an neural network surrogate as a pre-conditioner inside a traditional numerical solver, whereas other works utilise PINN's to provide error correction for coarse scale models \cite{Gao2021}. 
 
-\subsection{Optimization Problem}
+\subsection{Surrogate Model}
 
-Our optimization problem consists of a large area, with known input parameters: spatially varying permeability field and pressure boundary conditions. 
-We solve for the boundary value problem using a finite volumn subsurface solver to determine the pressure field, velocity field and temperature field. 
-However, we assume that the velocity field is is only locally influenced by a GWHP, and we can therefore run our model without any GWHP's installed to determine an initial pressure and velocity field.  
-We also assume that the subsurface temperature is domniated by the advection term in the darcy flow equations.  
+The surrogate model only needs to solve for the local temperature field around a GWHP. 
+We solve for the boundary value problem using a finite volume subsurface solver to determine the pressure field, velocity field and temperature field. 
+%However, we assume that the velocity field is is only locally influenced by a GWHP, and we can therefore run our model without any GWHP's installed to determine an initial pressure and velocity field.  
+We assume that the subsurface temperature is domniated by the advection term in the darcy flow equations, and the temperature profile follows the velocity field profile. 
+Therefore, our aim is to develop a neural network that uses the spatially varying, steady-state groundwater velocity field as an input, and outputs the thermal plume that develops due to the additional of a single GWHP in a smaller domain. 
 
-Therefore, our aim is to develop a neural network that uses the spatially varying, steady-state groundwater velocity field as in input, and outputs the thermal plume that develops due to the additional of a GWHP to the domain. 
-%If we need to optimize the locations of heat pumps throughout a city, then an initial baseline simulation can be run, and the initial velocity field of the city can be obtained. 
-%Snapshots from this velocity field can be used to train the neural network, and an optimization procedure can be run to determine the thermal interference of thousands of combinations of heat pumps. 
 
 \subsection*{Dataset Description}
 
-In order to train the neural network, we need to provide enough training data such that the thermal plume can be accurately captured. We use PFLOTRAN to perform the high-fidelity subsurface simulations \cite{pflotran-paper}. We consider a 2D domain with directions $x$ and $y$, and darcy velocities $q_x$ and $q_y$. The darcy velocities are used as inputs to the neural network. The training data simulations are performed on a 64x64 grid with 4096 cells, covering an area of 128$m$ $\times$ 128$m$ $\times$ 1$m$. 
+In order to train the neural network, we need to provide enough training data such that the thermal plume can be accurately captured. We use PFLOTRAN to perform the high-fidelity subsurface simulations \cite{pflotran-paper}. We consider a 2D domain with directions $x$ and $y$, and darcy velocities $q_x$ and $q_y$. The darcy velocities are used as inputs to the neural network. The training data simulations are performed on a 64x64 structured grid with 4096 cells, covering an area of 128$m$ $\times$ 128$m$ $\times$ 1$m$. A mass injection of 0.01 $kg \cdot s^{-1}$ is used for the heat pump, and run for a total of 720 days to achieve a pseudo steady state solution.
 
 %\begin{figure}[h]
 %\centering
@@ -232,9 +232,9 @@ In order to train the neural network, we need to provide enough training data su
 
 %\todo{to train fast surrogate we need data}
 
-\todo{data is generated using FV solver pflotran for different configurations}
+%\todo{data is generated using FV solver pflotran for different configurations}
 
-The training is generated by varying the permeability field and pressure boundary conditions to generate "randomly" varying velocity fields. The permeability field is generated by using the python library \textit{random} to randomly assign values between $(-1 , 1)$ at various points on a square grid throughout the domain. These values are then mapped using the radial basis function interpolation method, using thin-plate-splines basis functions. These values are then rescaled and converted into the log format for the permeability fields. And example permeability field in shown in Fig.~\ref{fig:sub1_perm}.
+The training is generated by varying the permeability field and pressure boundary conditions to generate "randomly" varying velocity fields. The permeability field is generated by using the Python Random module to pseudo-randomly assign values between $(-1 , 1)$ at various points on a square grid throughout the domain. These values are then mapped to the PFLOTRAN grid using the radial basis function (RBF) interpolation method, using thin-plate-splines basis functions. These values are then rescaled and converted into the permeability field values. And example permeability field in shown in Fig.~\ref{fig:sub1_perm}. We created 6 sets of data with which to train the model. Three data sets use a relatively coarse grid 4 $\times$ 4 grid for the RBF interpolation onto the PFLOTRAN grid, and another three data sets with a 8 $\times$ 8 grid. Each of these three data sets have a maximum and minimum permeability value of: $1.1 \cdot 10^{-7}$ - $5.6 \cdot 10^{-9}$, $4.1 \cdot 10^{-8}$ - $2.1 \cdot 10^{-9}$ and $1.5 \cdot 10^{-8}$ - $7.6 \cdot 10^{-10}$.
 
 The pressure gradient applied to the domain is also generated using the \textit{random} library in python. Two random values for the $x$ and $y$ direction gradient is applied. Only positive gradient values are applied in the $x$ direction $(0 , 1)$, whereas the $y$ direction is allowed to vary between $(-1 , 1)$. This generate velocity fields in the positive $x$ direction only, however we can rotate the data during training. 
 
@@ -278,7 +278,6 @@ with the energy source term $Q_e$, enthalpy $H$, thermal conductivity $\kappa$ a
 \todo{Data augmentation?}
 
 
-
 \subsection*{Model}
 \todo{as surrogate we use a TurbNet structure}
 \begin{figure}[htb]
@@ -288,11 +287,11 @@ with the energy source term $Q_e$, enthalpy $H$, thermal conductivity $\kappa$ a
    \label{fig:arch}
 \end{figure}
 
-For our surrogate we chose a slightly modified version of the ``TurbNet'' architecture as described in \cite{turbnet}.
-The general shape is similar to a simple ``UNet'' \cite{unet} where the input is convolved into coarser and coarser features on a contracting path.
-This is done until a bottleneck level is reached.
+For our surrogate model, we chose a slightly modified version of the ``TurbNet'' architecture as described in \cite{Thuerey2019}.
+The general shape is similar to a simple ``UNet'' \cite{Ronneberger2015} where the input is convolved into coarser and coarser features on a contracting path until a bottleneck level is reached. 
+%This is done until a bottleneck level is reached. 
 From this on the feature channels are again deconvolved in a symmetric fashion upwards.
-Additionally, each step in the hierarchy also includes a skip connection copying intermediate results from the contracting path and concatenating it feature wise to the results of the expanding path.
+Additionally, each step in the hierarchy also includes a skip connection, copying intermediate results from the contracting path and concatenating it feature wise to the results of the expanding path.
 A graphical overview is depicted in Figure \ref{fig:arch}
 
 \todo{why did we choose this?}
