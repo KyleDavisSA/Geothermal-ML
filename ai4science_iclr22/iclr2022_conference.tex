@@ -111,9 +111,20 @@ This results in the thermal plume extending in one direction only for the analyt
 
 \begin{figure}
 \centering
-\includegraphics[width=0.4\textwidth]{analyticalPlume.png}
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[width=.8\linewidth]{analyticalPlume.png}
+  \caption{Permeability Field}
+  \label{analyticalPlume}
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[width=.8\linewidth]{large_temp_example.png}
+  \caption{Pressure Field}
+  \label{large_example}
+\end{subfigure}
 \caption{The thermal plume developed by a GWHP derived from the LAHM model. The thermal plume is uni-directional, and is dependent only on the parameters at the location of reinjection, and does not account for varying parameters elsewhere in the domain.}
-\label{analyticalPlume}
+\label{fig:test}
 \end{figure}
 
 %One crucial development of the past decade to achieve this is the widespread adoptioln of more energy efficient and carbon-free techniques for heating and cooling urban buildings.
@@ -141,7 +152,7 @@ This results in the thermal plume extending in one direction only for the analyt
 %\item Second application is a web-based planning tool, which gives energy planners an easy tool to assess compatability.
 %\end{enumerate}
 
-\textbf{Related Work}
+%\textbf{Related Work}
 
 Machine learning based surrogates for physical applications has increased dramatically in recent years \cite{Vinuesa2021,Laubscher2021,Chen2021,Zhu2019}. 
 %Equally the number of different approaches is quite diverse.
