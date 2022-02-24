@@ -5,12 +5,13 @@
 % Optional math commands from https://github.com/goodfeli/dlbook_notation.
 \input{math_commands.tex}
 
-\usepackage{hyperref}
 \usepackage{url}
+\usepackage{hyperref}
 % \usepackage{subfig}
 \usepackage{graphicx}
 \usepackage{cleveref}
-\usepackage[disable]{todonotes}
+% \usepackage[disable]{todonotes}
+\usepackage{todonotes}
 \setuptodonotes{inline}
 \usepackage{tikz}
 \usepackage{caption}
@@ -111,7 +112,7 @@ Analytical solutions provide a computationally cheap solution \cite{Pophillat202
 The analytical solutions do not account for variations in the groundwater parameters in space, such as varying permeability field, pressure gradients and velocity fields. 
 This results in the thermal plume extending in one direction only for the analytical solutions, however, the thermal plumes may change their direction due to heterogenous groundwater parameters. 
 
-\begin{figure}
+\begin{figure}[!htb]
 \centering
 \begin{subfigure}{.5\textwidth}
   \centering
@@ -214,7 +215,7 @@ In order to train the neural network, we need to provide enough training data su
 %\end{tikzpicture}
 %\end{figure}
 
-\begin{figure}
+\begin{figure}[!htb]
 \centering
 \begin{subfigure}{.33\textwidth}
   \centering
@@ -286,10 +287,14 @@ with the energy source term $Q_e$, enthalpy $H$, thermal conductivity $\kappa$ a
 
 \todo{Data augmentation?}
 
+\subsection*{Preprocessing}
+Before using the data we apply some preprocessing to aid the training process.
+We normalize each quantity (darcy flow $(q_x, q_y)$ and temperature $T$) separately such that they are restricted to the $[-1, 1]$ range.
+This simplifies the learning task for the NNs as has been shown previously e.g. in \citep{LeCun2012,Wiesler2011}.
 
 \subsection*{Model}
 \todo{as surrogate we use a TurbNet structure}
-\begin{figure}[htb]
+\begin{figure}[!htb]
    \centering
    \includegraphics[width=0.8\textwidth]{img/arch.pdf}
    \caption{Visualization of the U-net type network architecture. The encode and decoder paths feature a 2d convolutions with a kernelsize of $4$. Both paths are connected via skip connections in each level.}
@@ -297,13 +302,16 @@ with the energy source term $Q_e$, enthalpy $H$, thermal conductivity $\kappa$ a
 \end{figure}
 
 For our surrogate model, we chose a slightly modified version of the ``TurbNet'' architecture as described in \cite{Thuerey2019}.
-The general shape is similar to a simple ``UNet'' \cite{Ronneberger2015} where the input is convolved into coarser and coarser features on a contracting path until a bottleneck level is reached. 
+The input is given as a two-channel image with $64x64$ pixel values corresponding the the darcy flow $q$.
+The general shape is similar to a simple ``U-net'' \cite{Ronneberger2015} where the input is convolved into coarser and coarser features on a contracting path until a bottleneck level is reached. 
 %This is done until a bottleneck level is reached. 
 From this on the feature channels are again deconvolved in a symmetric fashion upwards.
 Additionally, each step in the hierarchy also includes a skip connection, copying intermediate results from the contracting path and concatenating it feature wise to the results of the expanding path.
-A graphical overview is depicted in Figure \ref{fig:arch}
+As an output the network produces a single channel image at the same $64x64$ resolution of the predicted temperature plume.
+A graphical overview of the architecture is depicted in figure \ref{fig:arch}.
 In contrast to \citep{Thuerey2019} we raised the feature size of the bottleneck path.
 Our assumption was that features which are convolved down to a single pixel value don't hold much relevant information anymore and we can thus save some model complexity.
+Additionally, we lowered the amount of channels in each block as our experiments showed good results even with fewer parameters.
 
 \todo{why did we choose this?}
 \todo{- network description here}
@@ -318,10 +326,6 @@ Our assumption was that features which are convolved down to a single pixel valu
 \section{Results}
 \label{sec:results}
 
-
-
-\todo{preprocessing}
-
 \todo{- model setup}
 % \begin{figure}[htb]
 %    \centering
@@ -332,7 +336,7 @@ Our assumption was that features which are convolved down to a single pixel valu
 \todo{- evaluation (error on test set, inference time)}
 
 
-\begin{figure}[htb]
+\begin{figure}[!htb]
    \centering
    \begin{subfigure}{0.9\textwidth}
       \includegraphics[width=\textwidth]{img/13_comparison.png}
@@ -347,25 +351,36 @@ Our assumption was that features which are convolved down to a single pixel valu
       \vspace{-1cm}
    \end{subfigure}
    \caption{Prediction and simulation groundtruth for three different samples from the test dataset. The rightmost column displays the absolute error in \degree C.}
+   \label{fig:results}
 \end{figure}
 
+We trained the aforementioned model on a dataset of $n_c=278$ samples. $n_v=56$ of these where randomly selected as validation data during training.
+The model was trained using the ADAM optimizer \citep{adam} with a fixed learning rate $lr=0.0004$.
+After training for $n_{ep}=60000$ epochs we show a selection of three different predictions of the trained model in figure \ref{fig:results}.
+These were made on a held out test set of size $n_h=120$ which was never before seen by the model.
+Show in each row are the models prediction, the target temperature field from the numerical solution and the point-wise error between the two.
+We can nicely observe that in all cases the general flow direction and shape of the temperature plume matches the target.
+Quantifying the error we see each example having different magniutes ranging from $0.025$ \degree C to $0.5$ \degree C.
+\todo{this is not so bad, rel. error over whole dataset 1\% and high errors mostly due to "small" misalignement of plume}
+Furthermore the analytical LAHM model from \cite{Pophillat2020} is overlaid in the middle column.
+This clearly demonstrates the improvement in quality that our new method provides.
+\todo{e.g. in a real-world scenario a bending plume shifting by ~10m could make the difference when deciding where to place gwhps}
 
-\begin{figure}[htb]
-   \centering
-   \includegraphics[width=10cm,height=6cm]{example-image-a}
-   \caption{Example screenshot of a web app showing multiple hand placed heatpumps on a city map with heat plumes being generated using the surrogate model.}
-\end{figure}
+
+
+
+% \begin{figure}[htb]
+%    \centering
+%    \includegraphics[width=10cm,height=6cm]{example-image-a}
+%    \caption{Example screenshot of a web app showing multiple hand placed heatpumps on a city map with heat plumes being generated using the surrogate model.}
+% \end{figure}
 \todo{- overlay of local surrogates on city map (?)}
-
-
-
 For further details of the training process see 
 
 \section{Conclusion}
 \label{sec:conclusion}
 
-
-
+\todo{conclusion here}
 \todo{- future work: overlapping local predictions $\rightarrow$ resolve with global city-wide model}
 
 In the future we would like to expand the surrogate model by also including a heatpump's power as a parametric input.
@@ -373,16 +388,16 @@ Furthermore a shortcoming of the current approach is that overlapping temperatur
 Even though in this application that scenario is not desirable, other applications might need such interaction.
 To deal with this another extension could be stitching together multiple local surrogate predictions and then using that as a preconditioned starting position for solving a traditional large scale numerical model of the whole city domain.
 
-- Web app currently uses analytical formulas. Want to add this as it uses non-uniform velocities.
+\todo{Web app currently uses analytical model. Want to add this as it uses non-uniform velocities.}
 
-%\input{backmatter.tex}
+% \input{backmatter.tex}
 
 \bibliography{iclr2022_conference}
 \bibliographystyle{iclr2022_conference}
 
 \appendix
-\section{Appendix}
-You may include other additional sections here.
+% \section{Appendix}
+% You may include other additional sections here.
 
 \section{Training Details}
 The model was traing using PyTorch \citep{pytorch} on a workstation with two NVIDIA RTX 3090 GPUs. The batchsize was fixed at $512$ data points and the ADAM optimizer was used with a learning rate of $1e-3$.
