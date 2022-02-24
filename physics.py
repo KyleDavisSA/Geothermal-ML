@@ -3,6 +3,8 @@ import numpy as np
 import torch.nn.functional as F
 from torch.nn.modules.utils import _quadruple
 
+from data import CacheDataset
+
 
 class SobelFilter(object):
     def __init__(self, imsize, correct=True, device="cpu"):
@@ -270,7 +272,7 @@ class SobelFilter(object):
             return grad
 
 
-def constitutive_constraint(input, output, sobel_filter: SobelFilter):
+def constitutive_constraint(input, output, sobel_filter: SobelFilter, dataset: CacheDataset = None):
     """see: https://documentation.pflotran.org/theory_guide/mode_th.html
         steady-state so temporal derivatives = 0
 
@@ -309,6 +311,11 @@ def constitutive_constraint(input, output, sobel_filter: SobelFilter):
     conv_factor = 1.0 / (24.0 * 60 * 60)
     q_u = input[:, 0, :, :].unsqueeze(1) * conv_factor
     q_v = input[:, 1, :, :].unsqueeze(1) * conv_factor
+
+    if dataset:
+        q_u = q_u * dataset.norm_v_x[1]
+        q_v = q_v * dataset.norm_v_y[1]
+        output = output * dataset.norm_temp[1] + dataset.norm_temp[0]
 
     # divergence
     mass_residual = (
