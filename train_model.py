@@ -2,7 +2,7 @@ import os
 
 from torchvision.transforms.functional import InterpolationMode
 from torchvision.transforms.transforms import CenterCrop
-from data import MultiFolderDataset
+from data import CacheDataset, MultiFolderDataset, get_dataset_complete_cached
 from physics import SobelFilter, constitutive_constraint
 from unet import TurbNetG, UNet, weights_init
 from models import DenseED
@@ -63,14 +63,20 @@ def augment_data(input, target):
 
 # data_path = "/import/sgs.local/scratch/leiterrl/Geothermal-ML/PFLOTRAN-Data/generated/SingleDirection"
 data_path = "/import/sgs.local/scratch/leiterrl/Geothermal-ML/PFLOTRAN-Data/noFlow_withFlow"
+data_path_cache = "/data/scratch/leiterrl/data_complete.pt"
 
 
-if not use_cache:
-    folder_list = [os.path.join(data_path, f"batch{i+1}") for i in range(2)]
-    mf_dataset = MultiFolderDataset(folder_list, data_augmentation=True)
-    torch.save(mf_dataset, cache_dir + "cache.pt")
-else:
-    mf_dataset = torch.load(cache_dir + "cache.pt")
+# if not use_cache:
+#     folder_list = [os.path.join(data_path, f"batch{i+1}") for i in range(2)]
+#     mf_dataset = MultiFolderDataset(folder_list, data_augmentation=True)
+#     torch.save(mf_dataset, cache_dir + "cache.pt")
+# else:
+#     mf_dataset = torch.load(cache_dir + "cache.pt")
+
+mf_dataset = get_dataset_complete_cached()
+
+
+# mf_dataset.dataset_tensor = mf_dataset.dataset_tensor.to("cuda")
 
 train_size = int(0.8 * len(mf_dataset))
 test_size = len(mf_dataset) - train_size
@@ -95,7 +101,7 @@ def run_epoch(rank, world_size):
             train_dataset,
             num_replicas=world_size,
             rank=rank,
-            shuffle=False,
+            shuffle=True,
             drop_last=False,
         )
 
@@ -103,26 +109,25 @@ def run_epoch(rank, world_size):
             test_dataset,
             num_replicas=world_size,
             rank=rank,
-            shuffle=False,
+            shuffle=True,
             drop_last=False,
         )
     else:
         sampler_train = None
         sampler_test = None
 
-    batch_size = 1024
-
     train_data_loader = DataLoader(
         train_dataset,
         batch_size=batch_size,
-        # shuffle=True,
+        shuffle=distributed_training is None,
         pin_memory=True,
         sampler=sampler_train,
+        # drop_last=True,
     )
     test_data_loader = DataLoader(
         test_dataset,
         batch_size=len(test_dataset),
-        # shuffle=True,
+        shuffle=distributed_training is None,
         pin_memory=True,
         sampler=sampler_test,
     )
@@ -264,6 +269,8 @@ def run_epoch(rank, world_size):
 
                 test_output = model(test_input)
                 # test_output = model.module.forward_simple(test_input)
+                test_output = test_output * mf_dataset.norm_temp[1] + mf_dataset.norm_temp[0]
+                test_target = test_target * mf_dataset.norm_temp[1] + mf_dataset.norm_temp[0]
                 test_loss = loss_fn(test_output, test_target)
                 test_rel_error = (test_output - test_target).abs().sum() / test_target.abs().sum()
             if rank == 0 or not distributed_training:
