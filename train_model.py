@@ -209,6 +209,8 @@ def run_epoch(rank, world_size):
     loss = 0
     iteration = 0
 
+    res_loss_weight = config["res_loss_weight"]
+
     for epoch in range(n_epochs):
         if distributed_training:
             sampler_train.set_epoch(epoch)
@@ -248,7 +250,7 @@ def run_epoch(rank, world_size):
             mse_loss = loss_fn(output, target)
             loss = mse_loss
             if physical_loss:
-                res_loss = constitutive_constraint(input, output, sobel_filter)
+                res_loss = constitutive_constraint(input, output, sobel_filter, mf_dataset)
                 loss = mse_loss + res_loss_weight * res_loss
 
             loss.backward()
@@ -269,6 +271,9 @@ def run_epoch(rank, world_size):
 
                 test_output = model(test_input)
                 # test_output = model.module.forward_simple(test_input)
+
+                # TODO: use dataset helper functions
+                # denormalization
                 test_output = test_output * mf_dataset.norm_temp[1] + mf_dataset.norm_temp[0]
                 test_target = test_target * mf_dataset.norm_temp[1] + mf_dataset.norm_temp[0]
                 test_loss = loss_fn(test_output, test_target)
