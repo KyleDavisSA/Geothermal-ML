@@ -10,7 +10,7 @@
 % \usepackage{subfig}
 \usepackage{graphicx}
 \usepackage{cleveref}
-\usepackage{todonotes}
+\usepackage[disable]{todonotes}
 \setuptodonotes{inline}
 \usepackage{tikz}
 \usepackage{caption}
@@ -171,7 +171,7 @@ In the case of a partial differential equation (PDE), the residual is added to t
 %This works by adding the PDE residual of the underlying equations to the loss function and thus optimizing the network for solutions which obey the underlying physical laws.
 Other approaches such as CFDNet \cite{cfdnet} include an neural network surrogate as a pre-conditioner inside a traditional numerical solver, whereas other works utilise PINN's to provide error correction for coarse scale models \cite{Gao2021}. 
 
-\subsection{Surrogate Model}
+\subsection*{Surrogate Model}
 
 The surrogate model only needs to solve for the local temperature field around a GWHP. 
 We solve for the boundary value problem using a finite volume subsurface solver to determine the pressure field, velocity field and temperature field. 
@@ -181,6 +181,13 @@ Therefore, our aim is to develop a neural network that uses the spatially varyin
 
 
 \subsection*{Dataset Description}
+
+% \todo{- Data description}
+% - Data generation (using PFLOTRAN)
+% \begin{enumerate}
+% \item Randomly generate permeability fields and pressure boundaries to generate velocity fields.
+% \item Simulate this with added heat flux to determine temperatures
+% \end{enumerate}
 
 In order to train the neural network, we need to provide enough training data such that the thermal plume can be accurately captured. We use PFLOTRAN to perform the high-fidelity subsurface simulations \cite{pflotran-paper}. We consider a 2D domain with directions $x$ and $y$, and darcy velocities $q_x$ and $q_y$. The darcy velocities are used as inputs to the neural network. The training data simulations are performed on a 64x64 structured grid with 4096 cells, covering an area of 128$m$ $\times$ 128$m$ $\times$ 1$m$. A mass injection of 0.01 $kg \cdot s^{-1}$ is used for the heat pump, and run for a total of 720 days to achieve a pseudo steady state solution.
 
@@ -285,7 +292,7 @@ with the energy source term $Q_e$, enthalpy $H$, thermal conductivity $\kappa$ a
 \begin{figure}[htb]
    \centering
    \includegraphics[width=0.8\textwidth]{img/arch.pdf}
-   \caption{Visualization of the network architecture. The encode and decoder paths feature a 2d convultions with a kernlsize of $4$. Both paths are connected via skip connections in each level.}
+   \caption{Visualization of the U-net type network architecture. The encode and decoder paths feature a 2d convolutions with a kernelsize of $4$. Both paths are connected via skip connections in each level.}
    \label{fig:arch}
 \end{figure}
 
@@ -295,48 +302,32 @@ The general shape is similar to a simple ``UNet'' \cite{Ronneberger2015} where t
 From this on the feature channels are again deconvolved in a symmetric fashion upwards.
 Additionally, each step in the hierarchy also includes a skip connection, copying intermediate results from the contracting path and concatenating it feature wise to the results of the expanding path.
 A graphical overview is depicted in Figure \ref{fig:arch}
+In contrast to \citep{Thuerey2019} we raised the feature size of the bottleneck path.
+Our assumption was that features which are convolved down to a single pixel value don't hold much relevant information anymore and we can thus save some model complexity.
 
 \todo{why did we choose this?}
-
-\todo{what is "slightly modified"?}
-
 \todo{- network description here}
+
 \todo{- this allows us to directly predict stationary temperature plume for a given flow field}
 \todo{- this surrogate can then be used in a real-time setting to make predictions for the website user}
 
 
-\subsubsection*{Physical Constraints}
-Additionally, we use \cref{eq:mass,eq:energy} to regularize the network during training.
-By ensuring that both of these are fulfilled for predictions of the model we steer the training process towards physically plausible solutions which obey mass and energy conservation.
-To achieve this we first calculate the residuals for both equations using sobel filters to get the gradient/divergence fields.
-These residuals are then added to the loss function of the optimizer.
-
-\todo{- using these we can additionally regularize the network during training}
-\todo{- makes sure that physically plausible solutions are found}
-\todo{- should be more robust?}
-\todo{- comparison with and without physical term (speeds up training?)}
 
 
 
 \section{Results}
 \label{sec:results}
 
-\todo{- Data description}
 
-- Data generation (using PFLOTRAN)
-\begin{enumerate}
-\item Randomly generate permeability fields and pressure boundaries to generate velocity fields.
-\item Simulate this with added heat flux to determine temperatures
-\end{enumerate}
 
 \todo{preprocessing}
 
 \todo{- model setup}
-\begin{figure}[htb]
-   \centering
-   \includegraphics[width=5cm]{example-image-a}
-   \caption{Example visualization of a single data sample. Streamlines represent the darcy flow velocity overlay over a plot of the temperature.}
-\end{figure}
+% \begin{figure}[htb]
+%    \centering
+%    \includegraphics[width=5cm]{example-image-a}
+%    \caption{Example visualization of a single data sample. Streamlines represent the darcy flow velocity overlay over a plot of the temperature.}
+% \end{figure}
 
 \todo{- evaluation (error on test set, inference time)}
 
@@ -366,11 +357,7 @@ These residuals are then added to the loss function of the optimizer.
 \end{figure}
 \todo{- overlay of local surrogates on city map (?)}
 
-\begin{figure}[htb]
-   \centering
-   \includegraphics[width=10cm,height=6cm]{example-image-a}
-   \caption{Training progress of the model. Displayed are the total $L_2$ loss and relative error over $n=6000$ epochs.}
-\end{figure}
+
 
 For further details of the training process see 
 
@@ -401,5 +388,23 @@ You may include other additional sections here.
 The model was traing using PyTorch \citep{pytorch} on a workstation with two NVIDIA RTX 3090 GPUs. The batchsize was fixed at $512$ data points and the ADAM optimizer was used with a learning rate of $1e-3$.
 The code is available at...
 \todo{add anonymous github repository}
+
+\begin{figure}[htb]
+   \centering
+   \includegraphics[width=10cm,height=6cm]{example-image-a}
+   \caption{Training progress of the model. Displayed are the total $L_2$ loss and relative error over $n=6000$ epochs.}
+\end{figure}
+
+\subsubsection*{Physical Constraints}
+Additionally, we use \cref{eq:mass,eq:energy} to regularize the network during training.
+By ensuring that both of these are fulfilled for predictions of the model we steer the training process towards physically plausible solutions which obey mass and energy conservation.
+To achieve this we first calculate the residuals for both equations using sobel filters to get the gradient/divergence fields.
+These residuals are then added to the loss function of the optimizer.
+
+\todo{- using these we can additionally regularize the network during training}
+\todo{- makes sure that physically plausible solutions are found}
+\todo{- should be more robust?}
+\todo{- comparison with and without physical term (speeds up training?)}
+
 
 \end{document}
