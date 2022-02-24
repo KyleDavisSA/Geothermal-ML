@@ -1,0 +1,11 @@
+# PARAMETERS
+lra: false
+data_augmentation: false
+n_epochs: 60000
+lr: 0.0004
+res_loss_weight: 0.001
+lra_alpha: 0.9
+channelExponent: 4
+batch_size: 1024
+write_freq: 500
+physical_loss: false
