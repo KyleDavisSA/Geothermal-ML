@@ -128,7 +128,7 @@ def plot_multi_comparison(input, pred, target):
         ax_target = plot_velocity_temperature_ax(
             axes[i, 1], input[i, :, :, :], target[i, :, :].squeeze(), vmin, vmax
         )
-        errors = (target - pred).squeeze()
+        errors = (target[i, :, :] - pred[i, :, :]).squeeze()
         errors_min = -errors.abs().max()
         errors_max = errors.abs().max()
         ax_error = plot_velocity_temperature_ax(
