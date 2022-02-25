@@ -551,9 +551,6 @@ author="LeCun, Yann A.
 and Bottou, L{\'e}on
 and Orr, Genevieve B.
 and M{\"u}ller, Klaus-Robert",
-editor="Montavon, Gr{\'e}goire
-and Orr, Genevi{\`e}ve B.
-and M{\"u}ller, Klaus-Robert",
 title="Efficient BackProp",
 bookTitle="Neural Networks: Tricks of the Trade: Second Edition",
 year="2012",
@@ -578,3 +575,16 @@ url="https://doi.org/10.1007/978-3-642-35289-8_3"
  year = {2011}
 }
 
+@article{BECK2019108910,
+title = {Deep neural networks for data-driven LES closure models},
+journal = {Journal of Computational Physics},
+volume = {398},
+pages = {108910},
+year = {2019},
+issn = {0021-9991},
+doi = {https://doi.org/10.1016/j.jcp.2019.108910},
+url = {https://www.sciencedirect.com/science/article/pii/S0021999119306151},
+author = {Andrea Beck and David Flad and Claus-Dieter Munz},
+keywords = {Ideal large eddy simulation, Turbulence modeling, Data-driven LES model, Convolutional neural networks, Discontinuous Galerkin method},
+abstract = {In this work, we present a novel data-based approach to turbulence modeling for Large Eddy Simulation (LES) by artificial neural networks. We define the perfect LES formulation including the discretization operators and derive the associated perfect closure terms. We then generate training data for these terms from direct numerical simulations of decaying homogeneous isotropic turbulence. We design and train artificial neural networks based on local convolution filters to predict the underlying unknown non-linear mapping from the coarse grid quantities to the closure terms without a priori assumptions. We show that selecting both the coarse grid primitive variables as well as the coarse grid LES operator as input features significantly improves training results. All investigated networks are able to generalize from the data and learn approximations with a cross correlation of up to 47% and even 73% for the inner elements, demonstrating that the perfect closure can indeed be learned from the provided coarse grid data. Since the learned closure terms are approximate, a direct application leads to stability issues. We show how to employ the artificial neural network output to construct stable and accurate models. The best results have been achieved with a data-informed, temporally and spatially adaptive eddy viscosity closure. While further investigations into the generalizability of the approach is warranted, this work thus represents a starting point for further research into data-driven, optimal turbulence models.}
+}
