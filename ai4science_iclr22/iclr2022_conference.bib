@@ -33,7 +33,6 @@ volume = {38},
 number = {10},
 pages = {1499-1511},
 doi = {https://doi.org/10.1002/aic.690381003},
-url = {https://aiche.onlinelibrary.wiley.com/doi/abs/10.1002/aic.690381003},
 eprint = {https://aiche.onlinelibrary.wiley.com/doi/pdf/10.1002/aic.690381003},
 year = {1992}
 }
@@ -45,7 +44,6 @@ year = {2020},
 isbn = {9781450379830},
 publisher = {Association for Computing Machinery},
 address = {New York, NY, USA},
-url = {https://doi.org/10.1145/3392717.3392772},
 doi = {10.1145/3392717.3392772},
 abstract = {CFD is widely used in physical system design and optimization, where it is used to predict engineering quantities of interest, such as the lift on a plane wing or the drag on a motor vehicle. However, many systems of interest are prohibitively expensive for design optimization, due to the expense of evaluating CFD simulations.To render the computation tractable, reduced-order or surrogate models are used to accelerate simulations while respecting the convergence constraints provided by the higher-fidelity solution. This paper introduces CFDNet - a physical simulation and deep learning coupled framework, for accelerating the convergence of Reynolds Averaged Navier-Stokes simulations. CFDNet is designed to predict the primary physical properties of the fluid including velocity, pressure, and eddy viscosity using a single convolutional neural network at its core. We evaluate CFDNet on a variety of use-cases, both extrapolative and interpolative, where test geometries are observed/not-observed during training. Our results show that CFDNet meets the convergence constraints of the domain-specific physics solver while outperforming it by 1.9 - 7.4X on both steady laminar and turbulent flows. Moreover, we demonstrate the generalization capacity of CFDNet by testing its prediction on new geometries unseen during training. In this case, the approach meets the CFD convergence criterion while still providing significant speedups over traditional domain-only models.},
 booktitle = {Proceedings of the 34th ACM International Conference on Supercomputing},
@@ -64,14 +62,13 @@ pages = "686 - 707",
 year = "2019",
 issn = "0021-9991",
 doi = "https://doi.org/10.1016/j.jcp.2018.10.045",
-url = "http://www.sciencedirect.com/science/article/pii/S0021999118307125",
 author = "M. Raissi and P. Perdikaris and G.E. Karniadakis",
 keywords = "Data-driven scientific computing, Machine learning, Predictive modeling, Runge–Kutta methods, Nonlinear dynamics",
 abstract = "We introduce physics-informed neural networks – neural networks that are trained to solve supervised learning tasks while respecting any given laws of physics described by general nonlinear partial differential equations. In this work, we present our developments in the context of solving two main classes of problems: data-driven solution and data-driven discovery of partial differential equations. Depending on the nature and arrangement of the available data, we devise two distinct types of algorithms, namely continuous time and discrete time models. The first type of models forms a new family of data-efficient spatio-temporal function approximators, while the latter type allows the use of arbitrarily accurate implicit Runge–Kutta time stepping schemes with unlimited number of stages. The effectiveness of the proposed framework is demonstrated through a collection of classical problems in fluids, quantum mechanics, reaction–diffusion systems, and the propagation of nonlinear shallow-water waves."
 }
 
 @article{Thuerey2019,
-title = "Deep Learning Methods for Reynolds-Averaged Navier–Stokes Simulations of Airfoil Flows",
+title = "Deep Learning Methods for {R}eynolds-Averaged {Navier–Stokes} Simulations of Airfoil Flows",
 journal = "American Institute of Aeronautics and Astronautics",
 volume = "58",
 number = "1",
@@ -112,7 +109,7 @@ keywords = {conjugate gradient method, Large scale nonlinear optimization, parti
 }
 
 
-@article{nn_pde_data, title={Solving parametric PDE problems with artificial neural networks}, DOI={10.1017/S0956792520000182}, journal={European Journal of Applied Mathematics}, publisher={Cambridge University Press}, author={Khoo, YUEHAW and LU, JIANFENG and YING, LEXING}, year={2020}, pages={1–15}}
+@article{nn_pde_data, title={Solving parametric {PDE} problems with artificial neural networks}, DOI={10.1017/S0956792520000182}, journal={European Journal of Applied Mathematics}, publisher={Cambridge University Press}, author={Khoo, Yuehaw and Lu, Jianfeng and Ying, Lexing}, year={2020}, pages={1–15}}
 
 
 @misc{neural_op,
@@ -134,7 +131,7 @@ keywords = {conjugate gradient method, Large scale nonlinear optimization, parti
 }
 
 @misc{pinn_convergence,
-      title={On the convergence of physics informed neural networks for linear second-order elliptic and parabolic type PDEs}, 
+      title={On the convergence of physics informed neural networks for linear second-order elliptic and parabolic type {PDEs}}, 
       author={Yeonjong Shin and Jerome Darbon and George Em Karniadakis},
       year={2020},
       eprint={2004.01806},
@@ -150,7 +147,6 @@ pages = "136 - 152",
 year = "2019",
 issn = "0021-9991",
 doi = "https://doi.org/10.1016/j.jcp.2019.05.027",
-url = "http://www.sciencedirect.com/science/article/pii/S0021999119303584",
 author = "Yibo Yang and Paris Perdikaris",
 keywords = "Variational inference, Generative adversarial networks, Probabilistic deep learning, Probabilistic scientific computing, Data-driven modeling",
 abstract = "We present a deep learning framework for quantifying and propagating uncertainty in systems governed by non-linear differential equations using physics-informed neural networks. Specifically, we employ latent variable models to construct probabilistic representations for the system states, and put forth an adversarial inference procedure for training them on data, while constraining their predictions to satisfy given physical laws expressed by partial differential equations. Such physics-informed constraints provide a regularization mechanism for effectively training deep generative models as surrogates of physical systems in which the cost of data acquisition is high, and training data-sets are typically small. This provides a flexible framework for characterizing uncertainty in the outputs of physical systems due to randomness in their inputs or noise in their observations that entirely bypasses the need for repeatedly sampling expensive experiments or numerical simulators. We demonstrate the effectiveness of our approach through a series of examples involving uncertainty propagation in non-linear conservation laws, and the discovery of constitutive laws for flow through porous media directly from noisy data."
@@ -167,7 +163,6 @@ abstract = "We present a deep learning framework for quantifying and propagating
 	publisher = {American Association for the Advancement of Science},
 	abstract = {Quantifying fluid flow is relevant to disciplines ranging from geophysics to medicine. Flow can be experimentally visualized using, for example, smoke or contrast agents, but extracting velocity and pressure fields from this information is tricky. Raissi et al. developed a machine-learning approach to tackle this problem. Their method exploits the knowledge of Navier-Stokes equations, which govern the dynamics of fluid flow in many scientifically relevant situations. The authors illustrate their approach using examples such as blood flow in an aneurysm.Science, this issue p. 1026For centuries, flow visualization has been the art of making fluid motion visible in physical and biological systems. Although such flow patterns can be, in principle, described by the Navier-Stokes equations, extracting the velocity and pressure fields directly from the images is challenging. We addressed this problem by developing hidden fluid mechanics (HFM), a physics-informed deep-learning framework capable of encoding the Navier-Stokes equations into the neural networks while being agnostic to the geometry or the initial and boundary conditions. We demonstrate HFM for several physical and biomedical problems by extracting quantitative information for which direct measurements may not be possible. HFM is robust to low resolution and substantial noise in the observation data, which is important for potential applications.},
 	issn = {0036-8075},
-	URL = {https://science.sciencemag.org/content/367/6481/1026},
 	eprint = {https://science.sciencemag.org/content/367/6481/1026.full.pdf},
 	journal = {Science}
 }
@@ -181,7 +176,6 @@ number = {5},
 pages = {e2019WR026731},
 keywords = {deep neural networks, physics-informed machine learning, parameter estimation, learning constitutive relationships, unsaturated flow, MAP},
 doi = {https://doi.org/10.1029/2019WR026731},
-url = {https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/2019WR026731},
 eprint = {https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/2019WR026731},
 note = {e2019WR026731 10.1029/2019WR026731},
 abstract = {Abstract We present a physics-informed deep neural network (DNN) method for estimating hydraulic conductivity in saturated and unsaturated flows governed by Darcy's law. For saturated flow, we approximate hydraulic conductivity and head with two DNNs and use Darcy's law in addition to measurements of hydraulic conductivity and head to train these DNNs. For unsaturated flow, we approximate unsaturated conductivity function and capillary pressure with DNNs and train these DNNs using measurements of capillary pressure and the Richards equation. Because it is difficult to measure unsaturated conductivity in the field, we assume that no measurements of unsaturated conductivity are available. The proposed approach enforces the partial differential equation (PDE) (Darcy or Richards equation) constraints by minimizing the PDE residual at select points in the simulation domain. We demonstrate that physics constraints increase the accuracy of DNN approximations of sparsely observed functions and allow for training DNNs when no direct measurements of the functions of interest are available. For the saturated conductivity estimation problem, we show that the physics-informed DNN method is more accurate than the state-of-the-art maximum a posteriori probability method. For the unsaturated flow in homogeneous porous media, we find that the proposed method can accurately estimate the pressure-conductivity relationship based on the capillary pressure measurements only, even in the presence of measurement noise.},
@@ -189,7 +183,7 @@ year = {2020}
 }
 
 @misc{dl_lstm,
-      title={A Deep Learning based Approach to Reduced Order Modeling for Turbulent Flow Control using LSTM Neural Networks}, 
+      title={A Deep Learning based Approach to Reduced Order Modeling for Turbulent Flow Control using {LSTM} Neural Networks}, 
       author={Arvind T. Mohan and Datta V. Gaitonde},
       year={2018},
       eprint={1804.09269},
@@ -205,7 +199,6 @@ editor = {H. Wallach and H. Larochelle and A. Beygelzimer and F. d\textquotesing
 pages = {8024--8035},
 year = {2019},
 publisher = {Curran Associates, Inc.},
-url = {http://papers.neurips.cc/paper/9015-pytorch-an-imperative-style-high-performance-deep-learning-library.pdf}
 }
 
 @misc{tensorflow,
@@ -299,7 +292,6 @@ arxivId = {2009.04544},
 author = {McClenny, Levi and Braga-Neto, Ulisses},
 eprint = {2009.04544},
 title = {{Self-Adaptive Physics-Informed Neural Networks using a Soft Attention Mechanism}},
-url = {http://arxiv.org/abs/2009.04544},
 year = {2020}
 }
 
@@ -328,7 +320,7 @@ year = {2020}
 
 @inproceedings{nn_pde_cnn,
 author = {Tompson, Jonathan and Schlachter, Kristofer and Sprechmann, Pablo and Perlin, Ken},
-title = {Accelerating Eulerian Fluid Simulation with Convolutional Networks},
+title = {Accelerating {E}ulerian Fluid Simulation with Convolutional Networks},
 year = {2017},
 publisher = {JMLR.org},
 abstract = {Efficient simulation of the Navier-Stokes equations for fluid flow is a long standing problem in applied mathematics, for which state-of-the-art methods require large compute resources. In this work, we propose a data-driven approach that leverages the approximation power of deep-learning with the precision of standard solvers to obtain fast and highly realistic simulations. Our method solves the incompressible Euler equations using the standard operator splitting method, in which a large sparse linear system with many free parameters must be solved. We use a Convolutional Network with a highly tailored architecture, trained using a novel unsupervised learning framework to solve the linear system. We present real-time 2D and 3D simulations that outperform recently proposed data-driven methods; the obtained results are realistic and show good generalization properties.},
@@ -422,7 +414,6 @@ VOLUME = {12},
 YEAR = {2020},
 NUMBER = {12},
 ARTICLE-NUMBER = {5152},
-URL = {https://www.mdpi.com/2071-1050/12/12/5152}
 }
 
 @Article{Sbai2019,
@@ -433,7 +424,6 @@ volume = {11},
 year = {2019},
 NUMBER = {11},
 ARTICLE-NUMBER = {2233},
-URL = {https://www.mdpi.com/2073-4441/11/11/2233}
 }
 
 @Article{Nagoor2019,
@@ -443,7 +433,6 @@ journal = {Transport in Porous Media},
 volume = {126},
 year = {2019},
 pages = {719 -- 741},
-URL = {https://www.mdpi.com/2073-4441/11/11/2233}
 }
 
 @article{Robinson2012,
@@ -472,7 +461,7 @@ year = {2012}
     journal = {Physics of Fluids},
 	volume = {33},
 	pages = {087101},
-	URL = {https://doi.org/10.1063/5.0058529}
+	doi = {https://doi.org/10.1063/5.0058529}
 }
 
 @article{Chen2021,
@@ -495,7 +484,7 @@ year = {2012}
 
 @Article{pflotran-paper, 
 	Author = {Glenn E. Hammond and Peter C. Lichtner and Richard T. Mills},
-	Title = {Evaluating the performance of parallel subsurface simulators: An illustrative example with PFLOTRAN}, 
+	Title = {Evaluating the performance of parallel subsurface simulators: An illustrative example with {PFLOTRAN}}, 
 	Journal = {Water Resources Research}, 
 	Year = {2014}, 
 	Volume = {50}, 
@@ -504,7 +493,7 @@ year = {2012}
 } 
 	
 @article{Daemi2019,
-title = {Impact of building thermal load on the developed thermal plumes of a multi-borehole GSHP system in different canadian climates},
+title = {Impact of building thermal load on the developed thermal plumes of a multi-borehole {GSHP} system in different {C}anadian climates},
 journal = {Renewable Energy},
 volume = {134},
 pages = {550 -- 557},
@@ -534,7 +523,7 @@ author = {Pophillat, William and Attard, Guillaume and Bayer, Peter and Hecht-M�
   articleno = {3},
   booktitle = {Proceedings of the 34th ACM International Conference on Supercomputing},
   numpages  = {12},
-  url       = {https://doi.org/10.1145/3392717.3392772},
+  doi      = {https://doi.org/10.1145/3392717.3392772},
 }
 
 @article{Gao2021,
@@ -560,7 +549,6 @@ pages="9--48",
 abstract="The convergence of back-propagation learning is analyzed so as to explain common phenomenon observed by practitioners. Many undesirable behaviors of backprop can be avoided with tricks that are rarely exposed in serious technical publications. This paper gives some of those tricks, and offers explanations of why they work.",
 isbn="978-3-642-35289-8",
 doi="10.1007/978-3-642-35289-8_3",
-url="https://doi.org/10.1007/978-3-642-35289-8_3"
 }
 
 @inproceedings{Wiesler2011,
@@ -570,20 +558,18 @@ url="https://doi.org/10.1007/978-3-642-35289-8_3"
  pages = {},
  publisher = {Curran Associates, Inc.},
  title = {A Convergence Analysis of Log-Linear Training},
- url = {https://proceedings.neurips.cc/paper/2011/file/e836d813fd184325132fca8edcdfb40e-Paper.pdf},
- volume = {24},
+volume = {24},
  year = {2011}
 }
 
 @article{BECK2019108910,
-title = {Deep neural networks for data-driven LES closure models},
+title = {Deep neural networks for data-driven {LES} closure models},
 journal = {Journal of Computational Physics},
 volume = {398},
 pages = {108910},
 year = {2019},
 issn = {0021-9991},
 doi = {https://doi.org/10.1016/j.jcp.2019.108910},
-url = {https://www.sciencedirect.com/science/article/pii/S0021999119306151},
 author = {Andrea Beck and David Flad and Claus-Dieter Munz},
 keywords = {Ideal large eddy simulation, Turbulence modeling, Data-driven LES model, Convolutional neural networks, Discontinuous Galerkin method},
 abstract = {In this work, we present a novel data-based approach to turbulence modeling for Large Eddy Simulation (LES) by artificial neural networks. We define the perfect LES formulation including the discretization operators and derive the associated perfect closure terms. We then generate training data for these terms from direct numerical simulations of decaying homogeneous isotropic turbulence. We design and train artificial neural networks based on local convolution filters to predict the underlying unknown non-linear mapping from the coarse grid quantities to the closure terms without a priori assumptions. We show that selecting both the coarse grid primitive variables as well as the coarse grid LES operator as input features significantly improves training results. All investigated networks are able to generalize from the data and learn approximations with a cross correlation of up to 47% and even 73% for the inner elements, demonstrating that the perfect closure can indeed be learned from the provided coarse grid data. Since the learned closure terms are approximate, a direct application leads to stability issues. We show how to employ the artificial neural network output to construct stable and accurate models. The best results have been achieved with a data-informed, temporally and spatially adaptive eddy viscosity closure. While further investigations into the generalizability of the approach is warranted, this work thus represents a starting point for further research into data-driven, optimal turbulence models.}
