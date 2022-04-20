@@ -39,24 +39,11 @@
 % as long as the \iclrfinalcopy macro remains commented out below.
 % Non-anonymous submissions will be rejected without review.
 
-\author{Antiquus S.~Hippocampus, Natalia Cerebro \& Amelie P. Amygdale \thanks{ Use footnote for providing further information
-about author (webpage, alternative address)---\emph{not} for acknowledging
-funding agencies.  Funding acknowledgements go at the end of the paper.} \\
-Department of Computer Science\\
-Cranberry-Lemon University\\
-Pittsburgh, PA 15213, USA \\
-\texttt{\{hippo,brain,jen\}@cs.cranberry-lemon.edu} \\
-\And
-Ji Q. Ren \& Yevgeny LeNet \\
-Department of Computational Neuroscience \\
-University of the Witwatersrand \\
-Joburg, South Africa \\
-\texttt{\{robot,net\}@wits.ac.za} \\
-\AND
-Coauthor \\
-Affiliation \\
-Address \\
-\texttt{email}
+\author{Raphael Leiteritz, Kyle Davis, Miriam Schulte, \& Dirk Pfl\"uger  \\
+Institute for Parallel and Distributed Systems \\
+University of Stuttgart\\
+Stuttgart, Germany \\
+\texttt{\{raphael.leiteritz,kyle.davis\}@ipvs.uni-stuttgart.de} \\
 }
 
 % The \author macro works with any number of authors. There are two commands
@@ -70,7 +57,7 @@ Address \\
 \newcommand{\fix}{\marginpar{FIX}}
 \newcommand{\new}{\marginpar{NEW}}
 
-%\iclrfinalcopy % Uncomment for camera-ready version, but NOT for submission.
+\iclrfinalcopy % Uncomment for camera-ready version, but NOT for submission.
 \begin{document}
 
 
@@ -185,7 +172,7 @@ In this work, we focus on a purely supervised CNN approach for making new predic
 The surrogate model only needs to solve for the local temperature field around a GWHP. 
 % We solve for the boundary value problem using a finite volume subsurface solver to determine the pressure field, velocity field and temperature field. 
 %However, we assume that the velocity field is is only locally influenced by a GWHP, and we can therefore run our model without any GWHPs installed to determine an initial pressure and velocity field.  
-We assume that the subsurface temperature is domniated by the advection term in the Darcy flow equations (Eq.~\ref{eq:energy}), and the temperature profile follows the velocity field profile. 
+We assume that the subsurface temperature is dominated by the advection term in the Darcy flow equations (Eq.~\ref{eq:energy}), and the temperature profile follows the velocity field profile. 
 Therefore, our aim is to develop a surrogate model that uses the spatially varying, steady-state groundwater velocity field as an input, and outputs the thermal plume that develops due to the addition of a single GWHP in a smaller domain. 
 
 
@@ -405,6 +392,9 @@ Furthermore, a shortcoming of the current approach is the limitation to a small 
 To model larger scenarios with multiple heat pumps another extension could be stitching together multiple local surrogate predictions and then using these as a preconditioned starting point for solving larger numerical models on the scale of a whole city domain.
 
 \todo[disable]{Web app currently uses analytical model. Want to add this as it uses non-uniform velocities.}
+
+\subsubsection*{Acknowledgments}
+Funded by Deutsche Forschungsgemeinschaft (DFG, German Research Foundation) under Germany's Excellence Strategy - EXC 2075 – 390740016. We acknowledge the support by the Stuttgart Center for Simulation Science (SimTech).
 
 % \input{backmatter.tex}
 
