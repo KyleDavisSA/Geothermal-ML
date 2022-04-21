@@ -2,7 +2,13 @@ import os
 
 from torchvision.transforms.functional import InterpolationMode
 from torchvision.transforms.transforms import CenterCrop
-from data import CacheDataset, MultiFolderDataset, get_dataset_complete_cached
+from data import (
+    CacheDataset,
+    MultiFolderDataset,
+    get_dataset_all_dir_cached,
+    get_dataset_complete_cached,
+    get_mid_perm_training_cached,
+)
 from physics import SobelFilter, constitutive_constraint
 from unet import TurbNetG, UNet, weights_init
 from models import DenseED
@@ -30,7 +36,7 @@ scratch_dir = "/data/scratch/"
 base_dir = scratch_dir + "leiterrl/geoml"
 cache_dir = scratch_dir + "leiterrl/"
 use_cache = True
-distributed_training = True
+distributed_training = False
 
 with open("train.yml", "r") as stream:
     config = yaml.safe_load(stream)
@@ -46,6 +52,7 @@ channelExponent = config["channelExponent"]
 batch_size = config["batch_size"]
 write_freq = config["write_freq"]
 physical_loss = config["physical_loss"]
+imsize = config["imsize"]
 
 
 def augment_data(input, target):
@@ -62,8 +69,8 @@ def augment_data(input, target):
 
 
 # data_path = "/import/sgs.local/scratch/leiterrl/Geothermal-ML/PFLOTRAN-Data/generated/SingleDirection"
-data_path = "/import/sgs.local/scratch/leiterrl/Geothermal-ML/PFLOTRAN-Data/noFlow_withFlow"
-data_path_cache = "/data/scratch/leiterrl/data_complete.pt"
+# data_path = "/import/sgs.local/scratch/leiterrl/Geothermal-ML/PFLOTRAN-Data/noFlow_withFlow"
+# data_path_cache = "/data/scratch/leiterrl/data_complete.pt"
 
 
 # if not use_cache:
@@ -73,7 +80,9 @@ data_path_cache = "/data/scratch/leiterrl/data_complete.pt"
 # else:
 #     mf_dataset = torch.load(cache_dir + "cache.pt")
 
-mf_dataset = get_dataset_complete_cached()
+# mf_dataset = get_dataset_complete_cached(data_augmentation=True)
+# mf_dataset = get_dataset_all_dir_cached(data_augmentation=True)
+mf_dataset = get_mid_perm_training_cached()
 
 
 # mf_dataset.dataset_tensor = mf_dataset.dataset_tensor.to("cuda")
@@ -90,8 +99,8 @@ def run_epoch(rank, world_size):
 
     rand_rot_trans = RandomRotation(180, interpolation=InterpolationMode.BILINEAR)
     crop_trans = CenterCrop(45)
-    resize_trans = Resize((64, 64))
-    trans = Compose([rand_rot_trans, crop_trans, resize_trans])
+    # resize_trans = Resize((imsize, imsize))
+    # trans = Compose([rand_rot_trans, crop_trans, resize_trans])
 
     print(f"Total Length: {len(mf_dataset)}")
     print(f"Test size: {len(test_dataset)}")
@@ -149,7 +158,7 @@ def run_epoch(rank, world_size):
     # device = "cuda:0"
 
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    model_dir = base_dir + "_turbnet_rot_lr_phys" + timestamp
+    model_dir = base_dir + "mid_perm_test" + timestamp
     writer = SummaryWriter(model_dir, flush_secs=10)
     with open(os.path.join(model_dir, "train.yml"), "w") as yml_file:
         yaml.dump(config, yml_file)
@@ -173,7 +182,7 @@ def run_epoch(rank, world_size):
 
     if distributed_training:
         model = DDP(model, device_ids=[rank])
-    # print(model)
+    print(model)
     model_parameters = filter(lambda p: p.requires_grad, model.parameters())
     params = sum([np.prod(p.size()) for p in model_parameters])
     print("Initialized TurbNet with {} trainable params ".format(params))
@@ -187,7 +196,7 @@ def run_epoch(rank, world_size):
 
     loss_fn = MSELoss()
     # loss_fn = L1Loss()
-    sobel_filter = SobelFilter(64, correct=True, device=rank)
+    sobel_filter = SobelFilter(imsize, correct=True, device=rank)
 
     postfix_dict = {
         "loss": "",
@@ -206,6 +215,34 @@ def run_epoch(rank, world_size):
 
     # writer.add_graph(model)
 
+    # scaler = GradScaler()
+
+    # CUDA Graph warmup
+    # static_sample = next(iter(train_data_loader))
+    # static_input = static_sample[0].to(rank)
+    # static_target = static_sample[1].to(rank)
+
+    # s.wait_stream(torch.cuda.current_stream())
+    # with torch.cuda.stream(s):
+    #     for i in range(20):
+    #         optimizer.zero_grad(set_to_none=True)
+    #         output = model(static_input)
+    #         loss = loss_fn(output, static_target)
+    #         loss.backward()
+    #         optimizer.step()
+    # torch.cuda.current_stream().wait_stream(s)
+
+    # # CUDA Graph capture
+    # g = torch.cuda.CUDAGraph()
+    # # Sets grads to None before capture, so backward() will create
+    # # .grad attributes with allocations from the graph's private pool
+    # optimizer.zero_grad(set_to_none=True)
+    # with torch.cuda.graph(g):
+    #     static_y_pred = model(static_input)
+    #     loss = loss_fn(static_y_pred, static_target)
+    #     loss.backward()
+    #     optimizer.step()
+
     loss = 0
     iteration = 0
 
@@ -221,6 +258,10 @@ def run_epoch(rank, world_size):
             target = sample[1].to(rank)
             if data_augmentation:
                 input, target = augment_data(input, target)
+
+            # static_input.copy_(input)
+            # static_target.copy_(target)
+            # g.replay()
 
             input.requires_grad = True
 
@@ -277,7 +318,9 @@ def run_epoch(rank, world_size):
                 test_output = test_output * mf_dataset.norm_temp[1] + mf_dataset.norm_temp[0]
                 test_target = test_target * mf_dataset.norm_temp[1] + mf_dataset.norm_temp[0]
                 test_loss = loss_fn(test_output, test_target)
-                test_rel_error = (test_output - test_target).abs().sum() / test_target.abs().sum()
+                test_rel_error = torch.linalg.norm(test_output - test_target) / torch.linalg.norm(
+                    test_target
+                )
             if rank == 0 or not distributed_training:
                 postfix_dict["t_loss"] = f"{test_loss:.5f}"
                 postfix_dict["rel_err"] = f"{test_rel_error:.5f}"
@@ -285,7 +328,7 @@ def run_epoch(rank, world_size):
                 writer.add_scalar("rel_err", test_rel_error, epoch)
                 writer.add_figure(
                     "comp",
-                    plot_multi_comparison(test_input, test_output, test_target),
+                    plot_multi_comparison(test_input, test_output, test_target, imsize),
                     epoch,
                 )
 
