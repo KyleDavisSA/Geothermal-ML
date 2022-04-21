@@ -128,7 +128,7 @@ def blockUNet(in_c, out_c, name, transposed=False, bn=True, relu=True, size=4, p
 class TurbNetG(nn.Module):
     def __init__(self, channelExponent=6, dropout=0.0):
         super(TurbNetG, self).__init__()
-        channels = int(2 ** channelExponent + 0.5)
+        channels = int(2**channelExponent + 0.5)
 
         self.layer1 = nn.Sequential()
         self.layer1.add_module("layer1_conv", nn.Conv2d(2, channels, 4, 2, 1, bias=True))
@@ -258,7 +258,9 @@ class TurbNetG(nn.Module):
         self.dlayer1 = nn.Sequential()
         self.dlayer1.add_module("dlayer1_relu", nn.ReLU(inplace=True))
         self.dlayer1.add_module(
-            "dlayer1_tconv", nn.ConvTranspose2d(channels * 2, 1, 4, 2, 1, bias=True)
+            "dlayer1_tconv",
+            nn.ConvTranspose2d(channels * 2, 1, 3, 2, 0, bias=True)
+            # nn.ConvTranspose2d(channels * 2, 1, 4, 2, 1, bias=True),
         )
 
     # @torch.autocast("cuda")
