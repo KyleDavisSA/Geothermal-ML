@@ -6,10 +6,13 @@ from random import randint
 import seaborn as sns
 from cycler import cycler
 import matplotlib as mpl
+from matplotlib import rc
 
 
 # sns.set_theme(style="white", palette="mako")
 # sns.color_palette("mako", as_cmap=True)
+
+rc("text.latex", preamble=r"\usepackage{cmbright}")
 
 plt.rcParams.update(
     {
@@ -61,7 +64,7 @@ def plot_temperature_ax(ax, temp, vmin, vmax, cmap=None):
     return ax.imshow(temp, origin="lower", vmin=vmin, vmax=vmax, cmap=cmap)
 
 
-def plot_velocity_temperature_ax(ax, vel, temp, vmin, vmax, imsize: int = 64, cmap=None):
+def plot_velocity_temperature_ax(ax, vel, temp, vmin, vmax, imsize, cmap=None):
     U = vel[0, :, :].squeeze().detach().cpu()
     V = vel[1, :, :].squeeze().detach().cpu()
     plt_stream = ax.streamplot(
@@ -72,6 +75,9 @@ def plot_velocity_temperature_ax(ax, vel, temp, vmin, vmax, imsize: int = 64, cm
         density=0.5,
     )
     plt_temp = plot_temperature_ax(ax, temp.detach().cpu(), vmin, vmax, cmap=cmap)
+
+    # ax.set_xticks([0.0, 32.0, 64.0], labels=[0.0, 64.0, 128.0])
+    # ax.set_xticks([0.0, 32.0, 64.0])
 
     return plt_stream, plt_temp
 
@@ -117,22 +123,77 @@ def plot_comparison(input, pred, target):
     return fig
 
 
-def plot_multi_comparison(input, pred, target):
+def plot_comparison_plume(input, pred, target, x_grid, y_grid, plume_data, levels, imsize):
+    fig, axes = plt.subplots(1, 3, figsize=(12, 4), sharey=True)
+    # vmin = 10.0
+    # vmax = 14.0
+    # vmin = target.min() - target.max()
+    value_range = target.max() - target.min()
+    # vmin = target.min() - value_range
+    vmin = target.min()
+    vmax = target.max()
+    ax_pred = plot_velocity_temperature_ax(
+        axes[0], input, pred.squeeze(), vmin, vmax, imsize, cmap="Reds"
+    )
+    axes[0].contour(
+        x_grid, y_grid, plume_data, levels=levels, extend="neither", cmap="binary", alpha=0.5
+    )
+    ax_target = plot_velocity_temperature_ax(
+        axes[1], input, target.squeeze(), vmin, vmax, imsize, cmap="Reds"
+    )
+    axes[1].contour(
+        x_grid, y_grid, plume_data, levels=levels, extend="neither", cmap="binary", alpha=0.5
+    )
+    errors = (target - pred).squeeze()
+    errors_range = errors.max() - errors.min()
+    # errors_min = -errors.abs().max()
+    # errors_max = errors.abs().max()
+    errors_min = -1.5
+    errors_max = 1.5
+    ax_error = plot_velocity_temperature_ax(axes[2], input, errors, errors_min, errors_max, imsize)
+    axes[0].set_title("Prediction")
+    axes[1].set_title("Target")
+    axes[2].set_title("Error")
+
+    fontProperties = {
+        "family": "sans-serif",
+        # "font.sans-serif": ["Times New Roman"],
+        "size": 22,
+    }
+    axes[0].set_yticks([0.0, 32.0, 64.0])
+    axes[0].set_yticklabels([0, 64, 128])
+    axes[0].set_xticks([0.0, 32.0, 64.0])
+    axes[0].set_xticklabels([0, 64, 128])
+    axes[1].set_xticks([0.0, 32.0, 64.0])
+    axes[1].set_xticklabels([0, 64, 128])
+    axes[2].set_xticks([0.0, 32.0, 64.0])
+    axes[2].set_xticklabels([0, 64, 128])
+    cbar1 = fig.colorbar(ax_pred[1], ax=axes.ravel().tolist()[0:2], shrink=0.73)
+
+    # pos_old = axes[2].get_position()  # get the original position
+    # pos2 = [pos_old.x0 - 0.05, pos_old.y0, pos_old.width, pos_old.height]
+    # axes[2].set_position(pos2)  # set a new position
+    cbar2 = fig.colorbar(ax_error[1], ax=axes[2], shrink=0.73)
+
+    return fig
+
+
+def plot_multi_comparison(input, pred, target, imsize):
     fig, axes = plt.subplots(3, 3, figsize=(12, 12))
     for i in range(3):
         vmin = target.min()
         vmax = target.max()
         ax_pred = plot_velocity_temperature_ax(
-            axes[i, 0], input[i, :, :, :], pred[i, :, :].squeeze(), vmin, vmax
+            axes[i, 0], input[i, :, :, :], pred[i, :, :].squeeze(), vmin, vmax, imsize
         )
         ax_target = plot_velocity_temperature_ax(
-            axes[i, 1], input[i, :, :, :], target[i, :, :].squeeze(), vmin, vmax
+            axes[i, 1], input[i, :, :, :], target[i, :, :].squeeze(), vmin, vmax, imsize
         )
         errors = (target[i, :, :] - pred[i, :, :]).squeeze()
         errors_min = -errors.abs().max()
         errors_max = errors.abs().max()
         ax_error = plot_velocity_temperature_ax(
-            axes[i, 2], input[i, :, :, :], errors, errors_min, errors_max
+            axes[i, 2], input[i, :, :, :], errors, errors_min, errors_max, imsize
         )
 
     axes[0, 0].set_title("Pred")
