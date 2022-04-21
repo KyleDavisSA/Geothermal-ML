@@ -1,12 +1,13 @@
 import os
 import meshio
 import torch
+import math
 import random
 import numpy as np
 from torch.utils.data import DataLoader, Dataset
 
 from torchvision.transforms import RandomCrop, Resize, Compose, RandomRotation
-from torchvision.transforms.functional import InterpolationMode
+from torchvision.transforms.functional import InterpolationMode, rotate
 from torchvision.transforms.transforms import CenterCrop
 
 
@@ -22,15 +23,31 @@ def get_eligible_vtk_files(folder: str) -> "list[str]":
     return eligible_files
 
 
+def rotate_vector_field(vector_field: torch.Tensor, angle: float):
+
+    u = vector_field[0, :, :]
+    v = vector_field[1, :, :]
+
+    new_u = torch.empty_like(u)
+    new_v = torch.empty_like(v)
+    new_u = math.cos(angle) * u + math.sin(angle) * v
+    new_v = -math.sin(angle) * u + math.cos(angle) * v
+
+    new_u.unsqueeze_(0)
+    new_v.unsqueeze_(0)
+
+    return torch.cat([new_u, new_v], 0)
+
+
 class CacheDataset(Dataset):
     def __init__(
         self,
         cache_file: str,
-        imsize: int = 64,
+        imsize: int,
         normalize: bool = True,
         data_augmentation: bool = False,
     ) -> None:
-        data_augmentation_samples = 2000
+        data_augmentation_samples = 720
 
         self.normalize = normalize
         self.imsize: int = imsize
@@ -43,10 +60,47 @@ class CacheDataset(Dataset):
 
         if data_augmentation:
             self.dataset_size += data_augmentation_samples
+            self.dataset_tensor = torch.cat(
+                [
+                    self.dataset_tensor,
+                    torch.empty([data_augmentation_samples, 3, self.imsize, self.imsize]),
+                ],
+                0,
+            )
 
         self.norm_v_x = [0.0, 1.0]
         self.norm_v_y = [0.0, 1.0]
         self.norm_temp = [temp_offset, 1.0]
+
+        if data_augmentation:
+            # rand_rot_trans = RandomRotation(180, interpolation=InterpolationMode.BILINEAR)
+            crop_trans = CenterCrop(45)
+            resize_trans = Resize((self.imsize, self.imsize))
+            trans = Compose([crop_trans, resize_trans])
+
+            for i in range(data_augmentation_samples):
+                # get dataset sample
+                idx = random.randint(0, self.dataset_size - data_augmentation_samples)
+                angle = random.uniform(0.0, 360.0)
+
+                input = self.dataset_tensor[idx, 0:2, :, :].detach().clone()
+                target = self.dataset_tensor[idx, 2, :, :].unsqueeze(0).detach().clone()
+
+                # seed = np.random.randint(2147483647)  # make a seed with numpy generator
+                # random.seed(seed)  # apply this seed to img tranfsorms
+                # torch.manual_seed(seed)  # needed for torchvision 0.7
+                # input = trans(input)
+
+                # random.seed(seed)  # apply this seed to target tranfsorms
+                # torch.manual_seed(seed)  # needed for torchvision 0.7
+                # sample_aug = trans(sample)
+                input = rotate_vector_field(input, np.deg2rad(angle))
+                target = trans(rotate(target, angle))
+
+                new_idx = self.dataset_size - data_augmentation_samples + i
+                self.dataset_tensor[new_idx, 0:2, :, :] = input
+                self.dataset_tensor[new_idx, 2, :, :] = target
+                # self.dataset_tensor[new_idx, :, :, :] = sample_aug
 
         # normalize data by max over whole dataset
         if self.normalize:
@@ -60,35 +114,9 @@ class CacheDataset(Dataset):
             self.dataset_tensor[:, 1, :, :] = self.dataset_tensor[:, 1, :, :] * v_y_max_inv
             self.dataset_tensor[:, 2, :, :] = self.dataset_tensor[:, 2, :, :] * temp_max_inv
 
-            self.norm_v_x[1] = self.dataset_tensor[:, 0, :, :].abs().max()
-            self.norm_v_y[1] = self.dataset_tensor[:, 1, :, :].abs().max()
-            self.norm_temp[1] = self.dataset_tensor[:, 2, :, :].abs().max()
-
-        if data_augmentation:
-            rand_rot_trans = RandomRotation(180, interpolation=InterpolationMode.BILINEAR)
-            crop_trans = CenterCrop(45)
-            resize_trans = Resize((64, 64))
-            trans = Compose([rand_rot_trans, crop_trans, resize_trans])
-
-            for i in range(data_augmentation_samples):
-                # get dataset sample
-                idx = random.randint(0, self.dataset_size - data_augmentation_samples)
-
-                input = self.dataset_tensor[idx, 0:2, :, :].detach().clone()
-                target = self.dataset_tensor[idx, 2, :, :].unsqueeze(0).detach().clone()
-
-                seed = np.random.randint(2147483647)  # make a seed with numpy generator
-                random.seed(seed)  # apply this seed to img tranfsorms
-                torch.manual_seed(seed)  # needed for torchvision 0.7
-                input = trans(input)
-
-                random.seed(seed)  # apply this seed to target tranfsorms
-                torch.manual_seed(seed)  # needed for torchvision 0.7
-                target = trans(target)
-
-                new_idx = self.dataset_size - data_augmentation_samples + i
-                self.dataset_tensor[new_idx, 0:2, :, :] = input
-                self.dataset_tensor[new_idx, 2, :, :] = target
+            self.norm_v_x[1] = 1.0 / v_x_max_inv
+            self.norm_v_y[1] = 1.0 / v_y_max_inv
+            self.norm_temp[1] = 1.0 / temp_max_inv
 
     def __len__(self):
         return self.dataset_size
@@ -113,7 +141,7 @@ class MultiFolderDataset(Dataset):
     def __init__(
         self,
         folder_list: "list[str]",
-        imsize: int = 64,
+        imsize: int,
         normalize: bool = True,
         data_augmentation: bool = False,
     ) -> None:
@@ -151,7 +179,7 @@ class MultiFolderDataset(Dataset):
         if data_augmentation:
             rand_rot_trans = RandomRotation(180, interpolation=InterpolationMode.BILINEAR)
             crop_trans = CenterCrop(45)
-            resize_trans = Resize((64, 64))
+            resize_trans = Resize((self.imsize, self.imsize))
             trans = Compose([rand_rot_trans, crop_trans, resize_trans])
 
             for i in range(data_augmentation_samples):
@@ -212,11 +240,43 @@ def get_single_example():
     return mf_dataset[0]
 
 
-def get_dataset_complete_cached():
+def get_dataset_complete_cached(data_augmentation=False):
     data_path_cache = "/data/scratch/leiterrl/data_complete.pt"
-    return CacheDataset(data_path_cache, imsize=64, normalize=True, data_augmentation=False)
+    return CacheDataset(
+        data_path_cache, imsize=64, normalize=True, data_augmentation=data_augmentation
+    )
 
 
-def get_dataset_4_ex_cached():
+def get_dataset_all_dir_cached(data_augmentation=False):
+    data_path_cache = "/data/scratch/leiterrl/data_all_dir.pt"
+    return CacheDataset(
+        data_path_cache, imsize=64, normalize=True, data_augmentation=data_augmentation
+    )
+
+
+def get_mid_perm_test_cached(data_augmentation=False):
+    data_path_cache = "/data/scratch/leiterrl/data_mid_perm_test.pt"
+    return CacheDataset(
+        data_path_cache, imsize=65, normalize=True, data_augmentation=data_augmentation
+    )
+
+
+def get_mid_perm_training_cached(data_augmentation=False):
+    data_path_cache = "/data/scratch/leiterrl/data_mid_perm_training.pt"
+    return CacheDataset(
+        data_path_cache, imsize=65, normalize=True, data_augmentation=data_augmentation
+    )
+
+
+def get_dataset_all_dir_test_cached(data_augmentation=False):
+    data_path_cache = "/data/scratch/leiterrl/data_all_dir_test.pt"
+    return CacheDataset(
+        data_path_cache, imsize=64, normalize=True, data_augmentation=data_augmentation
+    )
+
+
+def get_dataset_4_ex_cached(data_augmentation=False):
     data_path_cache = "/data/scratch/leiterrl/data_4_ex.pt"
-    return CacheDataset(data_path_cache, imsize=64, normalize=True, data_augmentation=False)
+    return CacheDataset(
+        data_path_cache, imsize=64, normalize=True, data_augmentation=data_augmentation
+    )
