@@ -29,9 +29,7 @@ class UpsamplingBilinear2d(nn.Module):
         self.scale_factor = scale_factor
 
     def forward(self, x):
-        return F.interpolate(
-            x, scale_factor=self.scale_factor, mode="bilinear", align_corners=True
-        )
+        return F.interpolate(x, scale_factor=self.scale_factor, mode="bilinear", align_corners=True)
 
 
 class _DenseLayer(nn.Sequential):
@@ -45,9 +43,7 @@ class _DenseLayer(nn.Sequential):
         bottleneck (bool, False): If True, enable bottleneck design
     """
 
-    def __init__(
-        self, in_features, growth_rate, drop_rate=0.0, bn_size=8, bottleneck=False
-    ):
+    def __init__(self, in_features, growth_rate, drop_rate=0.0, bn_size=8, bottleneck=False):
         super(_DenseLayer, self).__init__()
         if bottleneck and in_features > bn_size * growth_rate:
             self.add_module("norm1", nn.BatchNorm2d(in_features))
@@ -258,9 +254,7 @@ class _Transition(nn.Sequential):
                     self.add_module("dropout1", nn.Dropout2d(p=drop_rate))
 
 
-def last_decoding(
-    in_features, out_channels, bias=False, drop_rate=0.0, upsample="nearest"
-):
+def last_decoding(in_features, out_channels, bias=False, drop_rate=0.0, upsample="nearest"):
     """Last transition up layer, which outputs directly the predictions."""
     last_up = nn.Sequential()
     last_up.add_module("norm1", nn.BatchNorm2d(in_features))
@@ -467,3 +461,109 @@ class DenseED(nn.Module):
                     module.reset_parameters()
                     if verbose:
                         print("Reset parameters in {}".format(module))
+
+
+class SVDEncoder(nn.Module):
+    def __init__(self, U_matrix) -> None:
+        super().__init__()
+
+        self.U_matrix = U_matrix
+
+    def forward(self, x):
+        # project onto basis
+        return torch.matmul(x, self.U_matrix)
+
+
+class SVDDecoder(nn.Module):
+    def __init__(self, U_matrix) -> None:
+        super().__init__()
+
+        self.U_matrix = U_matrix
+
+    def forward(self, x):
+        # unproject input
+        return torch.matmul(x, self.U_matrix.T)
+
+
+class GWHPSVDModel(nn.Module):
+    def __init__(self, U_tensor, num_modes: int) -> None:
+        super().__init__()
+
+        self.vel_x_e = SVDEncoder(U_tensor[0, :, :num_modes])
+        self.vel_y_e = SVDEncoder(U_tensor[1, :, :num_modes])
+        # self.temp_e = SVDEncoder(U_tensor[2, :, :num_modes])
+        self.perm_e = SVDEncoder(U_tensor[3, :, :num_modes])
+        self.pres_e = SVDEncoder(U_tensor[4, :, :num_modes])
+
+        self.lin1 = nn.Linear(num_modes * 2, 256)
+        self.lin2 = nn.Linear(256, 1024)
+        self.lin3 = nn.Linear(1024, 4096)
+
+        self.relu1 = nn.Tanh()
+        self.relu2 = nn.Tanh()
+        # self.relu3 = nn.ReLU()
+
+    def forward(self, x):
+        # expect x to contain vel, perm and press
+
+        vel_x_r = self.vel_x_e(x[:, 0, :])
+        vel_y_r = self.vel_y_e(x[:, 1, :])
+        # perm_r = self.perm_e(x[:, 3, :])
+        # pres_r = self.pres_e(x[:, 4, :])
+
+        # encoded = torch.concat([vel_x_r, vel_y_r, perm_r, pres_r], dim=1)
+        encoded = torch.concat([vel_x_r, vel_y_r], dim=1)
+
+        linear1 = self.lin1(encoded)
+        act1 = self.relu1(linear1)
+        linear2 = self.lin2(act1)
+        act2 = self.relu2(linear2)
+        linear3 = self.lin3(act2)
+
+        return linear3
+
+
+class GWHPSVDEncodeDecode(nn.Module):
+    def __init__(self, U_tensor, num_modes: int) -> None:
+        super().__init__()
+
+        self.vel_x_e = SVDEncoder(U_tensor[0, :, :num_modes])
+        self.vel_y_e = SVDEncoder(U_tensor[1, :, :num_modes])
+        self.perm_e = SVDEncoder(U_tensor[3, :, :num_modes])
+        self.pres_e = SVDEncoder(U_tensor[4, :, :num_modes])
+
+        self.temp_d = SVDDecoder(U_tensor[2, :, :num_modes])
+
+        self.fc = nn.Sequential(
+            nn.Linear(num_modes * 2, 64),
+            nn.Linear(64, 256),
+            nn.ReLU(),
+            nn.Linear(256, 256),
+            nn.ReLU(),
+            nn.Linear(256, 256),
+            nn.ReLU(),
+            nn.Linear(256, 256),
+            nn.ReLU(),
+            nn.Linear(256, 256),
+            nn.ReLU(),
+            nn.Linear(256, 64),
+            nn.ReLU(),
+            nn.Linear(64, num_modes),
+        )
+
+    def forward(self, x):
+        # expect x to contain vel, perm and press
+
+        vel_x_r = self.vel_x_e(x[:, 0, :])
+        vel_y_r = self.vel_y_e(x[:, 1, :])
+        # perm_r = self.perm_e(x[:, 3, :])
+        # pres_r = self.pres_e(x[:, 4, :])
+
+        # encoded = torch.concat([vel_x_r, vel_y_r, perm_r, pres_r], dim=1)
+        encoded = torch.concat([vel_x_r, vel_y_r], dim=1)
+
+        latent = self.fc(encoded)
+
+        decoded = self.temp_d(latent)
+
+        return decoded

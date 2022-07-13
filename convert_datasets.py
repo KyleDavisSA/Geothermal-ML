@@ -1,5 +1,5 @@
 import torch
-from data import load_vtk_file, get_eligible_vtk_files
+from data import load_vtk_file, get_eligible_vtk_files, load_vtk_file_all
 import os
 
 
@@ -23,6 +23,25 @@ def convert_dataset_folder(name: str, res: int):
         data_tensor[idx, :, :, :] = load_vtk_file(file_path, res)
 
     torch.save(data_tensor, cache_dir + "data_" + name + ".pt")
+
+
+def convert_dataset_folder_all(name: str, res: int):
+    """
+    convert dataset from vtk files to pt file including all fields (pres, perm, temp etc.)
+    """
+
+    folder_str = os.path.join(
+        "/import/sgs.local/scratch/leiterrl/Geothermal-ML/PFLOTRAN-Data", name
+    )
+    files = get_eligible_vtk_files(folder_str)
+
+    data_size = len(files)
+    data_tensor = torch.empty([data_size, 5, res * res])
+    for idx, file_path in enumerate(files):
+        print(idx)
+        data_tensor[idx, :, :] = load_vtk_file_all(file_path, res)
+
+    torch.save(data_tensor, cache_dir + "data_all_" + name + ".pt")
 
 
 # folder_4 = "/import/sgs.local/scratch/leiterrl/Geothermal-ML/PFLOTRAN-Data/rbf_n_4"
@@ -101,5 +120,6 @@ def convert_dataset_folder(name: str, res: int):
 # torch.save(tensor_testing, cache_dir + "data_testing.pt")
 # torch.save(torch.cat((tensor_4, tensor_8, tensor_testing), dim=0), cache_dir + "data_complete.pt")
 
-convert_dataset_folder("mid_perm_training", 65)
+# convert_dataset_folder("mid_perm_training", 65)
+convert_dataset_folder_all("all_direction", 64)
 print("done")
