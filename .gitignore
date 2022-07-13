@@ -2,6 +2,7 @@
 /runs
 /plots
 cache.pt
+/outputs
 
 ## Core latex/pdflatex auxiliary files:
 *.aux
