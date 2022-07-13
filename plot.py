@@ -1,12 +1,15 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from data import MultiFolderDataset
+
+# from data import MultiFolderDataset
 from random import randint
 import seaborn as sns
 from cycler import cycler
 import matplotlib as mpl
 from matplotlib import rc
+from typing import List
+from numpy.typing import NDArray
 
 
 # sns.set_theme(style="white", palette="mako")
@@ -18,7 +21,7 @@ plt.rcParams.update(
     {
         "text.usetex": True,
         "font.family": "sans-serif",
-        "font.sans-serif": ["Times New Roman"],
+        "font.sans-serif": ["Helvetica"],
         "font.size": 22,
         "axes.labelsize": 22,
         "axes.titlesize": 22,
@@ -58,13 +61,24 @@ mpl.rcParams["savefig.format"] = "pdf"
 # mpl.rcParams["legend.markerscale"] = 1.0
 
 
-def plot_temperature_ax(ax, temp, vmin, vmax, cmap=None):
+def plot_field(ax, temp, vmin=None, vmax=None, cmap=None):
     # return ax.imshow(temp, origin="lower", vmin=-1.0, vmax=1.0)
     # return ax.imshow(temp, origin="lower", vmin=10.0, vmax=15.0)
     return ax.imshow(temp, origin="lower", vmin=vmin, vmax=vmax, cmap=cmap)
 
 
-def plot_velocity_temperature_ax(ax, vel, temp, vmin, vmax, imsize, cmap=None):
+def plot_velocity_temperature_ax(ax, vel, temp, vmin, vmax, cmap=None):
+    plt_stream = plot_velocity_ax(ax, vel)
+    plt_temp = plot_field(ax, temp.detach().cpu(), vmin, vmax, cmap=cmap)
+
+    # ax.set_xticks([0.0, 32.0, 64.0], labels=[0.0, 64.0, 128.0])
+    # ax.set_xticks([0.0, 32.0, 64.0])
+
+    return plt_stream, plt_temp
+
+
+def plot_velocity_ax(ax, vel):
+    imsize = vel.shape[1]
     U = vel[0, :, :].squeeze().detach().cpu()
     V = vel[1, :, :].squeeze().detach().cpu()
     plt_stream = ax.streamplot(
@@ -74,12 +88,8 @@ def plot_velocity_temperature_ax(ax, vel, temp, vmin, vmax, imsize, cmap=None):
         V,
         density=0.5,
     )
-    plt_temp = plot_temperature_ax(ax, temp.detach().cpu(), vmin, vmax, cmap=cmap)
 
-    # ax.set_xticks([0.0, 32.0, 64.0], labels=[0.0, 64.0, 128.0])
-    # ax.set_xticks([0.0, 32.0, 64.0])
-
-    return plt_stream, plt_temp
+    return plt_stream
 
 
 def plot_velocity_temperature(vel, temp, vmin, vmax, imsize: int = 64, cmap=None):
@@ -88,7 +98,7 @@ def plot_velocity_temperature(vel, temp, vmin, vmax, imsize: int = 64, cmap=None
 
     fig, ax = plt.subplots(figsize=(12, 12))
 
-    _, _ = plot_velocity_temperature_ax(ax, vel, temp, vmin, vmax, imsize, cmap=cmap)
+    _, _ = plot_velocity_temperature_ax(ax, vel, temp, vmin, vmax, cmap=cmap)
     # q = ax.quiver(U, V)
 
     # plt.savefig("tmp.png")
@@ -97,6 +107,7 @@ def plot_velocity_temperature(vel, temp, vmin, vmax, imsize: int = 64, cmap=None
 
 
 def plot_comparison(input, pred, target):
+    axes: NDArray
     fig, axes = plt.subplots(1, 3, figsize=(12, 4))
     # vmin = 10.0
     # vmax = 14.0
@@ -124,6 +135,7 @@ def plot_comparison(input, pred, target):
 
 
 def plot_comparison_plume(input, pred, target, x_grid, y_grid, plume_data, levels, imsize):
+    axes: NDArray
     fig, axes = plt.subplots(1, 3, figsize=(12, 4), sharey=True)
     # vmin = 10.0
     # vmax = 14.0
@@ -132,14 +144,12 @@ def plot_comparison_plume(input, pred, target, x_grid, y_grid, plume_data, level
     # vmin = target.min() - value_range
     vmin = target.min()
     vmax = target.max()
-    ax_pred = plot_velocity_temperature_ax(
-        axes[0], input, pred.squeeze(), vmin, vmax, imsize, cmap="Reds"
-    )
+    ax_pred = plot_velocity_temperature_ax(axes[0], input, pred.squeeze(), vmin, vmax, cmap="Reds")
     axes[0].contour(
         x_grid, y_grid, plume_data, levels=levels, extend="neither", cmap="binary", alpha=0.5
     )
     ax_target = plot_velocity_temperature_ax(
-        axes[1], input, target.squeeze(), vmin, vmax, imsize, cmap="Reds"
+        axes[1], input, target.squeeze(), vmin, vmax, cmap="Reds"
     )
     axes[1].contour(
         x_grid, y_grid, plume_data, levels=levels, extend="neither", cmap="binary", alpha=0.5
@@ -178,40 +188,51 @@ def plot_comparison_plume(input, pred, target, x_grid, y_grid, plume_data, level
     return fig
 
 
-def plot_multi_comparison(input, pred, target, imsize):
+def plot_multi_input_comparison(input, pred, target, imsize):
+    velocities = input[:3, :2, :].reshape([3, 2, imsize, imsize])
+    pred = pred[:3, :].reshape([3, imsize, imsize])
+    target = target[:3, :].reshape([3, imsize, imsize])
+
+    return plot_multi_comparison(velocities, pred, target)
+
+
+def plot_multi_comparison(input, pred, target):
+    axes: NDArray
     fig, axes = plt.subplots(3, 3, figsize=(12, 12))
+    plt_temp = None
     for i in range(3):
         vmin = target.min()
         vmax = target.max()
-        ax_pred = plot_velocity_temperature_ax(
-            axes[i, 0], input[i, :, :, :], pred[i, :, :].squeeze(), vmin, vmax, imsize
+        plt_vel, plt_temp = plot_velocity_temperature_ax(
+            axes[i, 0], input[i, :, :, :], pred[i, :, :].squeeze(), vmin, vmax
         )
         ax_target = plot_velocity_temperature_ax(
-            axes[i, 1], input[i, :, :, :], target[i, :, :].squeeze(), vmin, vmax, imsize
+            axes[i, 1], input[i, :, :, :], target[i, :, :].squeeze(), vmin, vmax
         )
         errors = (target[i, :, :] - pred[i, :, :]).squeeze()
         errors_min = -errors.abs().max()
         errors_max = errors.abs().max()
-        ax_error = plot_velocity_temperature_ax(
-            axes[i, 2], input[i, :, :, :], errors, errors_min, errors_max, imsize
+        plt_vel, plt_temp_err = plot_velocity_temperature_ax(
+            axes[i, 2], input[i, :, :, :], errors, errors_min, errors_max
         )
+        cbar_err = fig.colorbar(plt_temp_err, ax=axes[i, 2], shrink=0.7)
 
     axes[0, 0].set_title("Pred")
     axes[0, 1].set_title("GT")
     axes[0, 2].set_title("Err")
-    cbar = fig.colorbar(ax_pred[1], ax=axes.ravel().tolist(), shrink=0.33)
+    cbar = fig.colorbar(plt_temp, ax=axes[:, :2].ravel().tolist(), shrink=0.33, location="left")
 
     return fig
 
 
-if __name__ == "__main__":
-    data_path = (
-        "/import/sgs.local/scratch/leiterrl/Geothermal-ML/PFLOTRAN-Data/generated/SingleDirection"
-    )
-    folder_list = [os.path.join(data_path, f"batch{i+1}") for i in range(2, 3)]
-    mf_dataset = MultiFolderDataset(folder_list)
-    idx = randint(0, len(mf_dataset) - 1)
-    input, target = mf_dataset[idx]
+# if __name__ == "__main__":
+#     data_path = (
+#         "/import/sgs.local/scratch/leiterrl/Geothermal-ML/PFLOTRAN-Data/generated/SingleDirection"
+#     )
+#     folder_list = [os.path.join(data_path, f"batch{i+1}") for i in range(2, 3)]
+#     mf_dataset = MultiFolderDataset(folder_list, imsize=64)
+#     idx = randint(0, len(mf_dataset) - 1)
+#     input, target = mf_dataset[idx]
 
-    fig = plot_velocity_temperature(input, target.squeeze(), 10.0, 15.0)
-    fig.savefig("plots/field-output" + str(idx) + ".png", dpi=300)
+#     fig = plot_velocity_temperature(input, target.squeeze(), 10.0, 15.0)
+#     fig.savefig("plots/field-output" + str(idx) + ".png", dpi=300)
