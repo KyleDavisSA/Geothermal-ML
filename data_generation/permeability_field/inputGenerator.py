@@ -1,7 +1,8 @@
 from xlrd import open_workbook
 import os
 import matplotlib.pyplot as plt
-import random 
+import random
+
 
 class Region(object):
     def __init__(self, id, Point, X1, Y1, Z1, X2, Y2, Z2, nTemps):
@@ -16,20 +17,31 @@ class Region(object):
         self.nTemps = nTemps
 
     def __str__(self):
-        return("Region object:\n"
-               "  Well_Number = {0}\n"
-               "  Point = {1}\n"
-               "  X1 = {2}\n"
-               "  Y1 = {3}\n"
-               "  Z1 = {4}\n"
-               "  X2 = {5}\n"
-               "  Y2 = {6}\n"
-               "  Z2 = {7}\n"
-               "  n_Temps = {8}"
-               .format(self.id, self.Point, self.X1,
-                       self.Y1, self.Z1, self.X2, self.Y2, self.Z2, self.nTemps))
-                       
-SetwordsFirst = '''
+        return (
+            "Region object:\n"
+            "  Well_Number = {0}\n"
+            "  Point = {1}\n"
+            "  X1 = {2}\n"
+            "  Y1 = {3}\n"
+            "  Z1 = {4}\n"
+            "  X2 = {5}\n"
+            "  Y2 = {6}\n"
+            "  Z2 = {7}\n"
+            "  n_Temps = {8}".format(
+                self.id,
+                self.Point,
+                self.X1,
+                self.Y1,
+                self.Z1,
+                self.X2,
+                self.Y2,
+                self.Z2,
+                self.nTemps,
+            )
+        )
+
+
+SetwordsFirst = """
 #Description: 3D toy problem for richards equation
 
 SIMULATION
@@ -198,9 +210,9 @@ FLOW_CONDITION initial
   /
   DATUM 0.d0 0.d0 1.d0
   GRADIENT
-'''
+"""
 
-SetwordsSecond = '''  
+SetwordsSecond = """  
   /
   PRESSURE 101325.d0
   TEMPERATURE 10.d0
@@ -217,14 +229,14 @@ FLOW_CONDITION injection_1
     DATA_UNITS kg/s
     INTERPOLATION LINEAR
     #time  #massrate
-'''
-#    0.d0 0.01d0 
+"""
+#    0.d0 0.01d0
 #    40.d0 0.01d0
 #    80.d0 0.01d0
 #    120.d0 0.01d0
 #    320.d0 0.01d0
 
-SetwordsThird = '''
+SetwordsThird = """
 /
 #ENERGY_RATE 200 W
   TEMPERATURE LIST 
@@ -292,9 +304,9 @@ DEBUG
   PRINT_WAYPOINTS
   PRINT_COUPLERS
 END
-'''
+"""
 
-'''
+"""
 wb = open_workbook('testing.xls')
 i = 0
 for sheet in wb.sheets():
@@ -316,7 +328,7 @@ for sheet in wb.sheets():
                 values.append(value)
         item = Region(*values)
         items.append(item)
-'''
+"""
 
 p1 = []
 p2 = []
@@ -328,97 +340,109 @@ nRunsStart = 1
 nRunsEnd = 4
 
 # Generate random points for pressure field boundary condition
-while(len(p1) < (nRunsEnd - nRunsStart)):
-	print("Len p1: ", len(p1))
-	if (not skip == 0):
-		#rand1 = random.uniform(-3, -1)
-		#rand2 = random.uniform(-2, 2)
-		rand1 = random.uniform(-3, 3)
-		rand2 = random.uniform(-3, 3)
-		if (abs(rand1) > 1 and abs(rand2) > 1 ):
-			p1.append(rand1/8000)
-			p2.append(rand2/8000)
-			p3.append(0)
-    	#print("Accessing one single value (eg. DSPName): {0}".format(item.Point))
-		i = i + 1
-		skip += 1
-	skip += 1
+while len(p1) < (nRunsEnd - nRunsStart):
+    print("Len p1: ", len(p1))
+    if not skip == 0:
+        # rand1 = random.uniform(-3, -1)
+        # rand2 = random.uniform(-2, 2)
+        rand1 = random.uniform(-3, 3)
+        rand2 = random.uniform(-3, 3)
+        if abs(rand1) > 1 and abs(rand2) > 1:
+            p1.append(rand1 / 8000)
+            p2.append(rand2 / 8000)
+            p3.append(0)
+            # print("Accessing one single value (eg. DSPName): {0}".format(item.Point))
+        i = i + 1
+        skip += 1
+    skip += 1
 
-print ("P1: ", p1)
-print ("P2: ", p2)
+print("P1: ", p1)
+print("P2: ", p2)
 
-TS = 20		# Time step length for pflotran input temperatures
+TS = 20  # Time step length for pflotran input temperatures
 
 massFlow = 0
 bcCounter = -1
-for i in range(nRunsStart,nRunsEnd):
-	bcCounter += 1
-	os.system("rm -r permeability.h5")
-	os.system("python3 initial_gauss_perm_creator.py")
-	if (i >= nRunsStart):
-		# Need to run 1 simulation without GWHP flow and 1 with flow
-		for j in range(0,2):
-			print("Running Simulation J: ", j, " - With Inputs: ", i)
-			print("bcCounter: ", bcCounter)
-			if (j == 0):
-				massFlow = 0
-			else:
-				massFlow = 0.05
-				
-			file = open("pflotran.in","w")
-			file.write(SetwordsFirst)
-			file.write("    PRESSURE ")
-			file.write(str(p1[bcCounter]))
-			file.write(" ")
-			file.write(str(p2[bcCounter]))
-			file.write(" ")
-			file.write(str(p3[bcCounter]))
-			file.write(SetwordsSecond)
-			file.write("    0.d0 " + str(massFlow) + "d0" + "\n")
-			file.write("    40.d0 " + str(massFlow) + "d0" + "\n")
-			file.write("    80.d0 " + str(massFlow) + "d0" + "\n")
-			file.write("    120.d0 " + str(massFlow) + "d0" + "\n")
-			file.write("    320.d0 " + str(massFlow) + "d0")
-			file.write(SetwordsThird)
-			file.close()
-			print("Pressure Input: ", p1[i-nRunsStart], " , ", p2[i-nRunsStart])
-			os.system("mpirun -n 4 pflotran pflotran.in > log.pflotran")
-			#input()
-			if (j == 0):
-				os.system("cp pflotran.in results/pflotran-noFlow-" + str(i) + ".in")
-				os.system("cp pflotran-004.vtk results/pflotran-noFlow-" + str(i) +".vtk")
-				os.system("cp pflotran-vel-004.vtk results/pflotran-noFlow-vel-" + str(i) + ".vtk")
-				with open('cell.dat', 'r') as f1, open('results/pflotran-noFlow-'+str(i) +'.vtk', 'r') as f2, open('results/pflotran-noFlow-vel-'+str(i) + '.vtk', 'r') as f3, open('results/pflotran-noFlow-new-'+ str(i) + '.vtk', 'w') as newVTK, open('results/pflotran-noFlow-new-vel-'+ str(i) + '.vtk', 'w') as newVEL:
-					#input2 = f.read()
-					lines1 = f1.readlines()
-					lines2 = f2.readlines()
-					lines3 = f3.readlines()
-					newVTK.writelines(lines1[:])
-					newVTK.writelines(lines2[5:])
-					newVEL.writelines(lines1[:])
-					newVEL.writelines(lines3[5:])
-					
-				os.system("rm results/pflotran-noFlow-" + str(i) +".vtk")
-				os.system("rm results/pflotran-noFlow-vel-" + str(i) +".vtk")
-				os.system("rm results/pflotran-withFlow-" + str(i) +".vtk")
-				os.system("rm results/pflotran-withFlow-vel-" + str(i) +".vtk")
-			else:
-				os.system("cp pflotran.in results/pflotran-withFlow-" + str(i) + ".in")
-				os.system("cp pflotran-004.vtk results/pflotran-withFlow-" + str(i) +".vtk")
-				os.system("cp pflotran-vel-004.vtk results/pflotran-withFlow-vel-" + str(i) + ".vtk")
-				with open('cell.dat', 'r') as f1, open('results/pflotran-withFlow-'+str(i) +'.vtk', 'r') as f2, open('results/pflotran-withFlow-vel-'+str(i) + '.vtk', 'r') as f3, open('results/pflotran-withFlow-new-'+ str(i) + '.vtk', 'w') as newVTK, open('results/pflotran-withFlow-new-vel-'+ str(i) + '.vtk', 'w') as newVEL:
-					#input2 = f.read()
-					lines1 = f1.readlines()
-					lines2 = f2.readlines()
-					lines3 = f3.readlines()
-					newVTK.writelines(lines1[:])
-					newVTK.writelines(lines2[5:])
-					newVEL.writelines(lines1[:])
-					newVEL.writelines(lines3[5:])
-					
-				os.system("rm results/pflotran-noFlow-" + str(i) +".vtk")
-				os.system("rm results/pflotran-noFlow-vel-" + str(i) +".vtk")	
-				os.system("rm results/pflotran-withFlow-" + str(i) +".vtk")
-				os.system("rm results/pflotran-withFlow-vel-" + str(i) +".vtk")
-				
+for i in range(nRunsStart, nRunsEnd):
+    bcCounter += 1
+    os.system("rm -r permeability.h5")
+    os.system("python3 initial_gauss_perm_creator.py")
+    if i >= nRunsStart:
+        # Need to run 1 simulation without GWHP flow and 1 with flow
+        for j in range(0, 2):
+            print("Running Simulation J: ", j, " - With Inputs: ", i)
+            print("bcCounter: ", bcCounter)
+            if j == 0:
+                massFlow = 0
+            else:
+                massFlow = 0.05
 
+            file = open("pflotran.in", "w")
+            file.write(SetwordsFirst)
+            file.write("    PRESSURE ")
+            file.write(str(p1[bcCounter]))
+            file.write(" ")
+            file.write(str(p2[bcCounter]))
+            file.write(" ")
+            file.write(str(p3[bcCounter]))
+            file.write(SetwordsSecond)
+            file.write("    0.d0 " + str(massFlow) + "d0" + "\n")
+            file.write("    40.d0 " + str(massFlow) + "d0" + "\n")
+            file.write("    80.d0 " + str(massFlow) + "d0" + "\n")
+            file.write("    120.d0 " + str(massFlow) + "d0" + "\n")
+            file.write("    320.d0 " + str(massFlow) + "d0")
+            file.write(SetwordsThird)
+            file.close()
+            print("Pressure Input: ", p1[i - nRunsStart], " , ", p2[i - nRunsStart])
+            os.system("mpirun -n 4 pflotran pflotran.in > log.pflotran")
+            # input()
+            if j == 0:
+                os.system("cp pflotran.in results/pflotran-noFlow-" + str(i) + ".in")
+                os.system("cp pflotran-004.vtk results/pflotran-noFlow-" + str(i) + ".vtk")
+                os.system("cp pflotran-vel-004.vtk results/pflotran-noFlow-vel-" + str(i) + ".vtk")
+                with open("cell.dat", "r") as f1, open(
+                    "results/pflotran-noFlow-" + str(i) + ".vtk", "r"
+                ) as f2, open("results/pflotran-noFlow-vel-" + str(i) + ".vtk", "r") as f3, open(
+                    "results/pflotran-noFlow-new-" + str(i) + ".vtk", "w"
+                ) as newVTK, open(
+                    "results/pflotran-noFlow-new-vel-" + str(i) + ".vtk", "w"
+                ) as newVEL:
+                    # input2 = f.read()
+                    lines1 = f1.readlines()
+                    lines2 = f2.readlines()
+                    lines3 = f3.readlines()
+                    newVTK.writelines(lines1[:])
+                    newVTK.writelines(lines2[5:])
+                    newVEL.writelines(lines1[:])
+                    newVEL.writelines(lines3[5:])
+
+                os.system("rm results/pflotran-noFlow-" + str(i) + ".vtk")
+                os.system("rm results/pflotran-noFlow-vel-" + str(i) + ".vtk")
+                os.system("rm results/pflotran-withFlow-" + str(i) + ".vtk")
+                os.system("rm results/pflotran-withFlow-vel-" + str(i) + ".vtk")
+            else:
+                os.system("cp pflotran.in results/pflotran-withFlow-" + str(i) + ".in")
+                os.system("cp pflotran-004.vtk results/pflotran-withFlow-" + str(i) + ".vtk")
+                os.system(
+                    "cp pflotran-vel-004.vtk results/pflotran-withFlow-vel-" + str(i) + ".vtk"
+                )
+                with open("cell.dat", "r") as f1, open(
+                    "results/pflotran-withFlow-" + str(i) + ".vtk", "r"
+                ) as f2, open("results/pflotran-withFlow-vel-" + str(i) + ".vtk", "r") as f3, open(
+                    "results/pflotran-withFlow-new-" + str(i) + ".vtk", "w"
+                ) as newVTK, open(
+                    "results/pflotran-withFlow-new-vel-" + str(i) + ".vtk", "w"
+                ) as newVEL:
+                    # input2 = f.read()
+                    lines1 = f1.readlines()
+                    lines2 = f2.readlines()
+                    lines3 = f3.readlines()
+                    newVTK.writelines(lines1[:])
+                    newVTK.writelines(lines2[5:])
+                    newVEL.writelines(lines1[:])
+                    newVEL.writelines(lines3[5:])
+
+                os.system("rm results/pflotran-noFlow-" + str(i) + ".vtk")
+                os.system("rm results/pflotran-noFlow-vel-" + str(i) + ".vtk")
+                os.system("rm results/pflotran-withFlow-" + str(i) + ".vtk")
+                os.system("rm results/pflotran-withFlow-vel-" + str(i) + ".vtk")
