@@ -17,8 +17,16 @@ def cleanup():
     dist.destroy_process_group()
 
 
-def run_parallel(train_fn, world_size):
-    mp.spawn(train_fn, args=(world_size,), nprocs=world_size, join=True)
+def run_parallel(train_fn, world_size, cfg):
+    mp.spawn(
+        train_fn,
+        args=(
+            world_size,
+            cfg,
+        ),
+        nprocs=world_size,
+        join=True,
+    )
 
 
 def compute_loss_grads(network: torch.nn.Module, loss: torch.Tensor):
@@ -28,3 +36,7 @@ def compute_loss_grads(network: torch.nn.Module, loss: torch.Tensor):
         if param.grad is not None:
             grads.append(torch.flatten(param.grad))
     return torch.cat(grads).clone()
+
+
+def svd_fields(data, idx):
+    return torch.linalg.svd(data[:, idx, :].T)
