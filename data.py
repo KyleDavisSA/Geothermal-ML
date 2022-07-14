@@ -9,7 +9,7 @@ from torch.utils.data import Dataset
 from torchvision.transforms import RandomCrop, Resize, Compose, RandomRotation
 from torchvision.transforms.functional import InterpolationMode, rotate
 from torchvision.transforms.transforms import CenterCrop
-from utils import svd_fields
+from utils import get_main_angle, svd_fields
 
 
 temp_offset = 12.5
@@ -215,16 +215,45 @@ class CacheDataset(Dataset):
 
 class SVDDataset(Dataset):
     def __init__(
-        self, data_tensor: torch.Tensor, imsize: int, normalize: bool = True, augment: bool = True
+        self,
+        data_tensor: torch.Tensor,
+        imsize: int,
+        normalize: bool,
+        augment: bool,
+        remove_rotation: bool,
     ):
         self.imsize = imsize
         self.data = data_tensor
+        initial_size = self.data.shape[0]
         # center temp data
         # self.data[:, 2, :] = self.data[:, 2, :] - 12.5
 
+        # create crop and resize transformation to apply after rotation
+        crop_trans = CenterCrop(45)
+        resize_trans = Resize((self.imsize, self.imsize))
+        self.trans = Compose([crop_trans, resize_trans])
+
         data_augmentation_samples = 720
 
+        if remove_rotation:
+            self.main_angles = torch.empty((initial_size), dtype=torch.float32)
+
+            for i in range(initial_size):
+                main_angle = get_main_angle(self.data[i, :2, :].reshape(2, imsize, imsize))
+                self.data[i, :2, :] = self.trans(
+                    rotate_vector_field(
+                        self.data[i, :2, :].reshape(2, imsize, imsize), -np.deg2rad(main_angle)
+                    )
+                ).reshape(2, imsize**2)
+                self.data[i, 2:, :] = self.trans(
+                    rotate(
+                        self.data[i, 2:, :].reshape(3, imsize, imsize), -main_angle, expand=False
+                    )
+                ).reshape(3, imsize**2)
+                self.main_angles[i] = main_angle
+
         if augment:
+            assert remove_rotation == False
             # extend dataset by num augmentation samples
             self.data = torch.cat(
                 [
@@ -236,11 +265,6 @@ class SVDDataset(Dataset):
 
             extended_size = self.data.shape[0]
 
-            # rand_rot_trans = RandomRotation(180, interpolation=InterpolationMode.BILINEAR)
-            crop_trans = CenterCrop(45)
-            resize_trans = Resize((self.imsize, self.imsize))
-            trans = Compose([crop_trans, resize_trans])
-
             for i in range(data_augmentation_samples):
                 # get dataset sample
                 idx = random.randint(0, extended_size - data_augmentation_samples)
@@ -249,10 +273,12 @@ class SVDDataset(Dataset):
                 # input = self.data[idx, 0:2, :, :].detach().clone()
                 # target = self.data[idx, 2, :, :].unsqueeze(0).detach().clone()
                 sample = self.data[idx, :, :].detach().clone()
-                sample[0:2, :] = rotate_vector_field(
-                    sample[0:2, :].reshape((-1, self.imsize, self.imsize)), np.deg2rad(angle)
+                sample[0:2, :] = self.trans(
+                    rotate_vector_field(
+                        sample[0:2, :].reshape((-1, self.imsize, self.imsize)), np.deg2rad(angle)
+                    )
                 ).reshape(-1, self.imsize**2)
-                sample[2:, :] = trans(
+                sample[2:, :] = self.trans(
                     rotate(sample[2:, :].reshape((-1, self.imsize, self.imsize)), angle)
                 ).reshape(-1, self.imsize**2)
 
@@ -272,13 +298,20 @@ class SVDDataset(Dataset):
             # center temp data
             self.data[:, 2, :] = self.data[:, 2, :] - temp_offset
 
+            # normalize teamp, pressure and perm
             self.mean_values = self.data.mean(dim=[0, 2])
-            for i in range(5):
+            for i in range(2, 5):
                 self.data[:, i, :] = self.data[:, i, :] - self.mean_values[i]
 
             self.scaling_factors_inv = 1.0 / (self.data.abs().max(dim=0).values.max(dim=1).values)
-            for i in range(5):
+            for i in range(2, 5):
                 self.data[:, i, :] = self.data[:, i, :] * self.scaling_factors_inv[i]
+
+            # normalize velocity
+            self.max_magnitude = torch.linalg.vector_norm(self.data[:, :2, :], dim=1).max()
+            # assert self.max_magnitude.shape[0] == 1
+            # mags_expanded = self.max_magnitude.unsqueeze(1).unsqueeze(2).expand(-1, 2, 4096)
+            self.data[:, :2, :] /= self.max_magnitude
 
             # calculate scaling factors
             # v_x_max_inv = 1.0 / self.dataset_tensor[:, 0, :, :].abs().max().item()
@@ -313,12 +346,34 @@ class SVDDataset(Dataset):
         return datatensor
 
     def un_normalize(self, datatensor):
-        for idx in range(5):
+        for idx in range(2, 5):
             datatensor[:, idx, :] = datatensor[:, idx, :] / self.scaling_factors_inv[idx]
             datatensor[:, idx, :] = datatensor[:, idx, :] + self.mean_values[idx]
 
+        # mags_expanded = self.max_magnitudes.unsqueeze(1).unsqueeze(2).expand(-1, 2, 4096)
+        datatensor[:, :2, :] *= self.max_magnitude
+
         datatensor[:, 2, :] += temp_offset
 
+        return datatensor
+
+    def un_rotate_temp(self, datatensor, idx):
+        main_angle = self.main_angles[idx].item()
+
+        datatensor = rotate(
+            datatensor.reshape(1, self.imsize, self.imsize), main_angle, expand=False
+        ).reshape(1, self.imsize**2)
+        return datatensor
+
+    def un_rotate(self, datatensor, idx):
+        main_angle = self.main_angles[idx].item()
+
+        datatensor[:2, :] = rotate_vector_field(
+            datatensor[:2, :].reshape(2, self.imsize, self.imsize), np.deg2rad(main_angle)
+        ).reshape(2, self.imsize**2)
+        datatensor[2:, :] = rotate(
+            datatensor[2:, :].reshape(3, self.imsize, self.imsize), main_angle, expand=False
+        ).reshape(3, self.imsize**2)
         return datatensor
 
     def __len__(self):
@@ -327,7 +382,7 @@ class SVDDataset(Dataset):
     def __getitem__(self, idx):
         "return input and label (index 2 = temp)"
         # todo check target shape
-        return self.data[idx, :, :], self.data[idx, 2, :]
+        return self.data[idx, :, :], self.data[idx, 2, :], idx
 
 
 def load_vtk_file_all(file_path_vel: str, imsize: int):
