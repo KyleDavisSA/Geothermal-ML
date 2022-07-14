@@ -11,5 +11,10 @@ params:
   lr: 0.001
   batch_size: 64
   imsize: 64
-  num_modes: 50
+  num_modes: 128
   train_split_percentage: 0.8
+  augment: False
+  remove_rotation: True
+  normalize: True
+  n_hidden: 4
+  n_latent_size: 32
