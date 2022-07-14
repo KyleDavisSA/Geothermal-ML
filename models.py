@@ -524,6 +524,50 @@ class GWHPSVDModel(nn.Module):
 
 
 class GWHPSVDEncodeDecode(nn.Module):
+    def __init__(self, U_tensor, n_modes: int, n_hidden: int, n_latent_size: int) -> None:
+        super().__init__()
+
+        self.vel_x_e = SVDEncoder(U_tensor[0, :, :n_modes])
+        self.vel_y_e = SVDEncoder(U_tensor[1, :, :n_modes])
+        self.perm_e = SVDEncoder(U_tensor[3, :, :n_modes])
+        self.pres_e = SVDEncoder(U_tensor[4, :, :n_modes])
+
+        self.temp_d = SVDDecoder(U_tensor[2, :, :n_modes])
+
+        self.hidden_layers = []
+        for i in range(n_hidden):
+            self.hidden_layers.append(nn.Linear(n_latent_size, n_latent_size))
+            self.hidden_layers.append(nn.ReLU())
+
+        self.fc = nn.Sequential(
+            nn.Linear(n_modes * 4, 64),
+            nn.Linear(64, n_latent_size),
+            nn.ReLU(),
+            *self.hidden_layers,
+            nn.Linear(n_latent_size, 64),
+            nn.ReLU(),
+            nn.Linear(64, n_modes),
+        )
+
+    def forward(self, x):
+        # expect x to contain vel, perm and press
+
+        vel_x_r = self.vel_x_e(x[:, 0, :])
+        vel_y_r = self.vel_y_e(x[:, 1, :])
+        perm_r = self.perm_e(x[:, 3, :])
+        pres_r = self.pres_e(x[:, 4, :])
+
+        encoded = torch.concat([vel_x_r, vel_y_r, perm_r, pres_r], dim=1)
+        # encoded = torch.concat([vel_x_r, vel_y_r], dim=1)
+
+        latent = self.fc(encoded)
+
+        decoded = self.temp_d(latent)
+
+        return decoded
+
+
+class GWHPSVDEncodeDecodeLinear(nn.Module):
     def __init__(self, U_tensor, num_modes: int) -> None:
         super().__init__()
 
@@ -534,22 +578,7 @@ class GWHPSVDEncodeDecode(nn.Module):
 
         self.temp_d = SVDDecoder(U_tensor[2, :, :num_modes])
 
-        self.fc = nn.Sequential(
-            nn.Linear(num_modes * 2, 64),
-            nn.Linear(64, 256),
-            nn.ReLU(),
-            nn.Linear(256, 256),
-            nn.ReLU(),
-            nn.Linear(256, 256),
-            nn.ReLU(),
-            nn.Linear(256, 256),
-            nn.ReLU(),
-            nn.Linear(256, 256),
-            nn.ReLU(),
-            nn.Linear(256, 64),
-            nn.ReLU(),
-            nn.Linear(64, num_modes),
-        )
+        self.fc = nn.Sequential(nn.Linear(num_modes * 2, num_modes, bias=True))
 
     def forward(self, x):
         # expect x to contain vel, perm and press
