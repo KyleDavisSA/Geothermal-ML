@@ -1,4 +1,4 @@
-from xlrd import open_workbook
+# from xlrd import open_workbook
 import os
 import matplotlib.pyplot as plt
 import random
@@ -339,6 +339,7 @@ skip = 1
 nRunsStart = 1
 nRunsEnd = 4
 
+i = 0
 # Generate random points for pressure field boundary condition
 while len(p1) < (nRunsEnd - nRunsStart):
     print("Len p1: ", len(p1))
@@ -365,7 +366,7 @@ massFlow = 0
 bcCounter = -1
 for i in range(nRunsStart, nRunsEnd):
     bcCounter += 1
-    os.system("rm -r permeability.h5")
+    os.remove("permeability.h5")
     os.system("python3 initial_gauss_perm_creator.py")
     if i >= nRunsStart:
         # Need to run 1 simulation without GWHP flow and 1 with flow
@@ -416,10 +417,10 @@ for i in range(nRunsStart, nRunsEnd):
                     newVEL.writelines(lines1[:])
                     newVEL.writelines(lines3[5:])
 
-                os.system("rm results/pflotran-noFlow-" + str(i) + ".vtk")
-                os.system("rm results/pflotran-noFlow-vel-" + str(i) + ".vtk")
-                os.system("rm results/pflotran-withFlow-" + str(i) + ".vtk")
-                os.system("rm results/pflotran-withFlow-vel-" + str(i) + ".vtk")
+                os.remove(f"results/pflotran-noFlow-{i}.vtk")
+                os.remove(f"results/pflotran-noFlow-vel-{i}.vtk")
+                os.remove(f"results/pflotran-withFlow-{i}.vtk")
+                os.remove(f"results/pflotran-withFlow-vel-{i}.vtk")
             else:
                 os.system("cp pflotran.in results/pflotran-withFlow-" + str(i) + ".in")
                 os.system("cp pflotran-004.vtk results/pflotran-withFlow-" + str(i) + ".vtk")
@@ -442,7 +443,7 @@ for i in range(nRunsStart, nRunsEnd):
                     newVEL.writelines(lines1[:])
                     newVEL.writelines(lines3[5:])
 
-                os.system("rm results/pflotran-noFlow-" + str(i) + ".vtk")
-                os.system("rm results/pflotran-noFlow-vel-" + str(i) + ".vtk")
-                os.system("rm results/pflotran-withFlow-" + str(i) + ".vtk")
-                os.system("rm results/pflotran-withFlow-vel-" + str(i) + ".vtk")
+                os.remove(f"results/pflotran-noFlow-{i}.vtk")
+                os.remove(f"results/pflotran-noFlow-vel-{i}.vtk")
+                os.remove(f"results/pflotran-withFlow-{i}.vtk")
+                os.remove(f"results/pflotran-withFlow-vel-{i}.vtk")

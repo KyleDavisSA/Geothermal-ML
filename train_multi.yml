@@ -1,0 +1,7 @@
+# PARAMETERS
+n_epochs: 100000
+lr: 0.001
+batch_size: 64
+write_freq: 1000
+imsize: 64
+num_modes: 50
