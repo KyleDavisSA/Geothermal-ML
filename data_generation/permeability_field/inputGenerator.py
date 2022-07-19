@@ -190,16 +190,16 @@ FILE well.vs
 END
 
 
-REGION obs
-FILE observationPoints.txt
-END
+#REGION obs
+#FILE observationPoints.txt
+#END
 
 
 #=========================== observation points ===============================
 
-OBSERVATION
-  REGION obs
-/
+#OBSERVATION
+#  REGION obs
+#/
 
 
 #=========================== flow conditions ==================================
