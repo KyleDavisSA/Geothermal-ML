@@ -6,6 +6,7 @@ This folder contains all python files and data to train a convolutional neural n
 
 ## Data
 
+Please see the data repository here: https://doi.org/10.18419/darus-3184.
 All data necessary for training the networks are provided in "data.tar.gz". This is divided into 32 batches of 25 samples each. Unzip the file to access the data.
 
 ## Setup
