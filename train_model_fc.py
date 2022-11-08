@@ -2,9 +2,8 @@ import os
 
 from torchvision.transforms.functional import InterpolationMode
 from torchvision.transforms.transforms import CenterCrop
-from data import MultiFolderDataset
-from unet_test import TurbNetG, TurbNetG_Light, UNet, weights_init, TurbNetG_noSkip_Light
-from models import DenseED
+from data_fc import MultiFolderDataset
+from unet import TurbNetG, TurbNetG_Light, UNet, weights_init, TurbNetG_noSkip_Light
 from torch import optim
 from torch.utils.data import DataLoader, random_split
 from torch.nn import MSELoss, L1Loss
@@ -19,6 +18,8 @@ import random
 import yaml
 import math
 import time
+import matplotlib.pyplot as plt
+
 
 from torch.utils.data.distributed import DistributedSampler
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -76,6 +77,21 @@ train_dataset = mf_dataset
 test_dataset = mf_dataset_test
 train_size = int(len(mf_dataset))
 test_size = int(len(mf_dataset_test))
+
+temperature, Vmax, loc_off_plume_x, loc_off_plume_y = train_dataset.extract_plume_data()
+#print(f"{temperature[0,0,:]}")
+#print(f"{temperature[0,1,:]}")
+#print(f"{temperature[0,2,:]}")
+print(f"{temperature[0,:,:]}")
+print(f"{temperature[1,:,:]}")
+
+for i in range(10):
+    H = temperature[i,:,:]
+    plt.imshow(H, interpolation='none',cmap='jet')
+    plt.show()
+
+exit()
+
 
 def run_epoch(rank, world_size):
     if distributed_training:

@@ -5,10 +5,12 @@ import math
 import random
 import numpy as np
 from torch.utils.data import DataLoader, Dataset
+from scipy import interpolate
 
 from torchvision.transforms import RandomCrop, Resize, Compose, RandomRotation
 from torchvision.transforms.functional import InterpolationMode, rotate
 from torchvision.transforms.transforms import CenterCrop
+import matplotlib.pyplot as plt
 
 
 temp_offset = 10
@@ -16,7 +18,7 @@ temp_offset = 10
 def get_eligible_vtk_files(folder: str) -> "list[str]":
     eligible_files: "list[str]" = []
     for data_file in sorted(os.listdir(folder)):
-        if "pflotran-noFlow-new-vel-" in data_file:
+        if "pflotran-withFlow-new-vel-" in data_file:
             eligible_files.append(os.path.join(folder, data_file))
 
     return eligible_files
@@ -159,6 +161,7 @@ class MultiFolderDataset(Dataset):
         
         # TODO: unify with CacheDataset
         # normalize data by max over whole dataset
+        '''
         if self.normalize:
             v_x_max_inv = 1.0 / self.dataset_tensor[:, 0, :, :].abs().max()
             v_y_max_inv = 1.0 / self.dataset_tensor[:, 1, :, :].abs().max()
@@ -171,7 +174,7 @@ class MultiFolderDataset(Dataset):
             self.norm_v_x[1] = 1.0 / v_x_max_inv
             self.norm_v_y[1] = 1.0 / v_y_max_inv
             self.norm_temp[1] = 1.0 / temp_max_inv
-
+        '''
 
     def __len__(self):
         return self.dataset_size
@@ -191,13 +194,147 @@ class MultiFolderDataset(Dataset):
 
         return vel
 
+    def extract_plume_data(self):
+
+        H = self.dataset_tensor[1,2,:,:]
+
+        plt.imshow(H, interpolation='none')
+        plt.show()
+
+        total_samples = 10
+        total_steps = 100
+        width = 31
+        mid_width = int((width-1)/2)
+        scaling_length_l = 0.05
+        scaling_length_w = 0.1
+
+        temperature = np.zeros((total_samples,total_steps,width))
+        Vmax = np.zeros((total_samples,total_steps,width))
+        Vx = np.zeros((total_samples,total_steps,width))
+        Vy = np.zeros((total_samples,total_steps,width))
+
+        plume_data = np.zeros((total_samples,total_steps,3))
+        locations_plume = np.zeros((total_samples,total_steps,2))
+        loc_off_plume_x = np.zeros((total_samples,total_steps,width))
+        loc_off_plume_y = np.zeros((total_samples,total_steps,width))
+        
+        cell_width = 2 # width of FV grids 
+
+        for k in range(total_samples):
+            mid_x = 65.001 # heat pump x distance
+            mid_y = 65.001 # heat pump y distance
+            q_x_mid = self.dataset_tensor[k,0,33,33]
+            q_y_mid = self.dataset_tensor[k,1,33,33]
+            plume_data[k,0,0] = q_x_mid
+            plume_data[k,0,1] = q_y_mid
+            plume_data[k,0,2] = self.dataset_tensor[k,2,33,33]
+            locations_plume[k,0,0] = 65.001
+            locations_plume[k,0,1] = 65.001
+
+            # Length of velocity vector
+            vec_length = math.sqrt(q_x_mid**2 + q_y_mid**2 ) 
+            # Obtain values every 2 metres, therefore find scaling factor
+            scaling_vec = scaling_length_l/vec_length
+            scaling_vec_w = scaling_length_w/vec_length
+
+            q_x_scaled = q_x_mid*scaling_vec
+            q_y_scaled = q_y_mid*scaling_vec
+            q_x_scaled_w = q_x_mid*scaling_vec_w
+            q_y_scaled_w = q_y_mid*scaling_vec_w
+            
+            for w in range(width):
+                loc_off_plume_x[k,0,w] = locations_plume[k,0,0] - ((mid_width-w)*q_y_scaled_w)
+                loc_off_plume_y[k,0,w] = locations_plume[k,0,1] + ((mid_width-w)*q_x_scaled_w)
+
+            #print(locations_plume[k,0,0] - loc_off_plume_x[k,0,2])
+            #print(locations_plume[k,0,1] - loc_off_plume_y[k,0,2])
+        
+            for i in range(1,total_steps):
+                mid_x += q_x_scaled
+                mid_y += q_y_scaled
+                locations_plume[k,i,0] = mid_x
+                locations_plume[k,i,1] = mid_y
+
+                vA = self.get_data_at_location(k,locations_plume[k,i,0],locations_plume[k,i,1], cell_width)
+                plume_data[k,i,0] = vA[0]
+                plume_data[k,i,1] = vA[1]
+                plume_data[k,i,2] = vA[2]
+
+                vec_length = math.sqrt(plume_data[k,i,0]**2 + plume_data[k,i,1]**2 ) 
+                scaling_vec = scaling_length_l/vec_length
+                scaling_vec_w = scaling_length_w/vec_length
+                q_x_scaled = plume_data[k,i,0]*scaling_vec
+                q_y_scaled = plume_data[k,i,1]*scaling_vec
+                q_x_scaled_w = plume_data[k,i,0]*scaling_vec_w
+                q_y_scaled_w = plume_data[k,i,1]*scaling_vec_w
+
+                for w in range(width):
+                    loc_off_plume_x[k,i,w] = locations_plume[k,i,0] - ((mid_width-w)*q_y_scaled_w)
+                    loc_off_plume_y[k,i,w] = locations_plume[k,i,1] + ((mid_width-w)*q_x_scaled_w)
+
+
+        print("Getting all values")
+        for i in range(total_samples):
+            for j in range(total_steps):
+                for k in range(width):
+                    x = loc_off_plume_x[i,j,k] 
+                    y = loc_off_plume_y[i,j,k] 
+                    vA = self.get_data_at_location(i,x,y, cell_width)
+                    temperature[i,j,k] = vA[2]
+                    Vmax[i,j,k] = math.sqrt(vA[0]**2 + vA[1]**2 ) 
+                    Vx[i,j,k] = vA[0]
+                    Vy[i,j,k] = vA[1]
+
+
+        return temperature, Vmax, loc_off_plume_x, loc_off_plume_y
+
+    def get_data_at_location(self,k,mid_x,mid_y,cell_width):
+        vA = np.zeros(3)
+        # https://realpython.com/python-rounding/
+        multiplier = 10 ** 0
+        lower_x_bound = int(math.floor((mid_x/2)*multiplier + 0.5) / multiplier)
+        lower_y_bound = int(math.floor((mid_y/2)*multiplier + 0.5) / multiplier)
+        upper_x_bound = int(lower_x_bound + 1)
+        upper_y_bound = int(lower_y_bound + 1)
+        #upper_x_bound = int(math.floor(math.ceil(mid_x)/cell_width))
+        #upper_y_bound = int(math.floor(math.ceil(mid_y)/cell_width))
+        #lower_x_bound = int(upper_x_bound - 1)
+        #lower_y_bound = int(upper_y_bound - 1)
+        #print(mid_x,mid_y)
+        #print(lower_x_bound,upper_x_bound)
+        #print(lower_y_bound,upper_y_bound)
+        xGrid = np.arange(1, 131, 2)
+        yGrid = np.arange(1, 131, 2)
+        for j in range(3):
+            result = self.dataset_tensor[k,j,:,:].flatten()
+            f = interpolate.interp2d(xGrid, yGrid, result, kind='linear')
+            vA[j] = f(mid_x,mid_y)
+            #v1 = self.dataset_tensor[k,j,lower_x_bound,lower_y_bound]
+            #v2 = self.dataset_tensor[k,j,upper_x_bound,lower_y_bound]
+            #v3 = self.dataset_tensor[k,j,upper_x_bound,upper_y_bound]
+            #v4 = self.dataset_tensor[k,j,lower_x_bound,upper_y_bound]
+            
+            #print("Ratio: ", (upper_x_bound*cell_width - 1) - mid_x, " - and: ",  mid_x - (lower_x_bound*cell_width - 1))
+            #v12 = v1*(((upper_x_bound*cell_width - 1) - mid_x)/(cell_width)) + v2*((mid_x - (lower_x_bound*cell_width - 1))/(cell_width))
+
+            #v34 = v3*((upper_x_bound*cell_width - 1) - mid_x)/((cell_width)) + v4*((mid_x - (lower_x_bound*cell_width - 1))/(cell_width))
+
+            #vA[j] = v12*(((upper_y_bound*cell_width - 1) - mid_y)/(cell_width)) + v34*((mid_y - (lower_y_bound*cell_width - 1))/(cell_width)) 
+            #print(v1, v2, v3, v4, vA[j])
+
+            #print(vA[j])
+
+        return vA
+        
+    
+
 
 def load_vtk_file(file_path_vel: str, imsize: int):
     """loads mesh and tmeperature data from vtk file
     expects file path including "vel" part
     """
     # file_path = file_path_vel.replace("pflotran-new-vel-", "pflotran-new-")
-    file_path = file_path_vel.replace("pflotran-noFlow-new-vel", "pflotran-withFlow-new")
+    file_path = file_path_vel.replace("pflotran-withFlow-new-vel", "pflotran-withFlow-new")
     mesh = meshio.read(file_path_vel)
     data = meshio.read(file_path)
 
@@ -217,7 +354,7 @@ def load_vtk_file_Inner(file_path_vel: str, imsize: int):
     expects file path including "vel" part
     """
     # file_path = file_path_vel.replace("pflotran-new-vel-", "pflotran-new-")
-    file_path = file_path_vel.replace("pflotran-noFlow-new-vel", "pflotran-withFlow-new")
+    file_path = file_path_vel.replace("pflotran-withFlow-new-vel", "pflotran-withFlow-new")
     mesh = meshio.read(file_path_vel)
     data = meshio.read(file_path)
 
@@ -235,3 +372,5 @@ def load_vtk_file_Inner(file_path_vel: str, imsize: int):
     out_data[2, :, :] = ret_data[2, 26:41, 26:41]
 
     return out_data
+    
+
