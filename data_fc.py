@@ -23,98 +23,14 @@ def get_eligible_vtk_files(folder: str) -> "list[str]":
 
     return eligible_files
 
-
-def rotate_vector_field(vector_field: torch.Tensor, angle: float):
-
-    u = vector_field[0, :, :]
-    v = vector_field[1, :, :]
-
-    new_u = torch.empty_like(u)
-    new_v = torch.empty_like(v)
-    new_u = math.cos(angle) * u + math.sin(angle) * v
-    new_v = -math.sin(angle) * u + math.cos(angle) * v
-
-    new_u.unsqueeze_(0)
-    new_v.unsqueeze_(0)
-
-    return torch.cat([new_u, new_v], 0)
-
-
-
         
-class CacheDataset(Dataset):
-    def __init__(
-        self,
-        cache_file: str,
-        imsize: int,
-        normalize: bool = True,
-        data_augmentation: bool = False,
-    ) -> None:
-        data_augmentation_samples = 720
-
-        self.normalize = normalize
-        self.imsize: int = imsize
-        self.dataset_size: int = 0
-        
-        self.dataset_tensor = torch.load(cache_file)
-        #self.dataset_size = self.dataset_tensor.shape[0]
-#
-        if data_augmentation:
-            self.dataset_size += data_augmentation_samples
-            self.dataset_tensor = torch.cat(
-                [
-                    self.dataset_tensor,
-                    torch.empty([data_augmentation_samples, 3, self.imsize, self.imsize]),
-                ],
-                0,
-            )
-
-        self.norm_v_x = [0.0, 1.0]
-        self.norm_v_y = [0.0, 1.0]
-        self.norm_temp = [temp_offset, 1.0]
-
-        # normalize data by max over whole dataset
-        if self.normalize:
-            # remove temperature offset
-            self.dataset_tensor[:, 2, :, :] -= temp_offset
-            # calculate scaling factors
-            v_x_max_inv = 1.0 / self.dataset_tensor[:, 0, :, :].abs().max()
-            v_y_max_inv = 1.0 / self.dataset_tensor[:, 1, :, :].abs().max()
-            temp_max_inv = 1.0 / self.dataset_tensor[:, 2, :, :].abs().max()
-            self.dataset_tensor[:, 0, :, :] = self.dataset_tensor[:, 0, :, :] * v_x_max_inv
-            self.dataset_tensor[:, 1, :, :] = self.dataset_tensor[:, 1, :, :] * v_y_max_inv
-            self.dataset_tensor[:, 2, :, :] = self.dataset_tensor[:, 2, :, :] * temp_max_inv
-
-            self.norm_v_x[1] = 1.0 / v_x_max_inv
-            self.norm_v_y[1] = 1.0 / v_y_max_inv
-            self.norm_temp[1] = 1.0 / temp_max_inv
-
-    def __len__(self):
-        return self.dataset_size
-
-    def __getitem__(self, index):
-        return (
-            self.dataset_tensor[index, 0:2, :, :],
-            self.dataset_tensor[index, 2, :, :].unsqueeze(0),
-        )
-
-    def get_temp_unnormalized(self, temp):
-        return temp * self.norm_temp[1] + self.norm_temp[0]
-
-    def get_velocities_unnormalized(self, vel):
-        vel[0, :, :] = vel[0, :, :] * self.norm_v_x[1]
-        vel[1, :, :] = vel[1, :, :] * self.norm_v_y[1]
-
-        return vel
-
-
 class MultiFolderDataset(Dataset):
     def __init__(
         self,
         folder_list: "list[str]",
         test_folders: [int],
         imsize: int,
-        normalize: bool = True,
+        normalize: bool = False,
         data_augmentation: bool = False,
         Inner: bool = False,
         test: bool = True,
@@ -145,15 +61,11 @@ class MultiFolderDataset(Dataset):
 
         self.dataset_size = len(eligible_files)
 
-        if data_augmentation:
-            self.dataset_size += data_augmentation_samples
 
         self.dataset_tensor = torch.empty([self.dataset_size, 3, self.imsize, self.imsize])
         for idx, file_path in enumerate(eligible_files):
-            if (Inner):
-                self.dataset_tensor[idx, :, :, :] = load_vtk_file_Inner(file_path, self.imsize)
-            else:
-                self.dataset_tensor[idx, :, :, :] = load_vtk_file(file_path, self.imsize)
+            print(idx)
+            self.dataset_tensor[idx, :, :, :] = load_vtk_file(file_path, self.imsize)
 
         self.norm_v_x = [0.0, 1.0]
         self.norm_v_y = [0.0, 1.0]
@@ -196,17 +108,28 @@ class MultiFolderDataset(Dataset):
 
     def extract_plume_data(self):
 
-        H = self.dataset_tensor[1,2,:,:]
+        '''
+        for i in range(10):
+            x = np.linspace(1, 65, 65)
+            y = np.linspace(1, 65, 65)
+            X, Y = np.meshgrid(x, y)
+            H = self.dataset_tensor[i,2,:,:]
+            u = self.dataset_tensor[i,0,:,:]
+            v = self.dataset_tensor[i,1,:,:]
+            density = 50 # defaults to 30- increased for more precision in the streamline
+            starting_point = np.array([[32,32]])
+            strm = plt.streamplot(X, Y, u, v, density=density, start_points=starting_point)
 
-        plt.imshow(H, interpolation='none')
-        plt.show()
+            plt.imshow(H, interpolation='none')
+            plt.show()
+        '''
 
         total_samples = 10
-        total_steps = 100
-        width = 31
+        total_steps = 40
+        width = 11
         mid_width = int((width-1)/2)
-        scaling_length_l = 0.05
-        scaling_length_w = 0.1
+        scaling_length_l = 0.5
+        scaling_length_w = 0.5
 
         temperature = np.zeros((total_samples,total_steps,width))
         Vmax = np.zeros((total_samples,total_steps,width))
@@ -218,18 +141,18 @@ class MultiFolderDataset(Dataset):
         loc_off_plume_x = np.zeros((total_samples,total_steps,width))
         loc_off_plume_y = np.zeros((total_samples,total_steps,width))
         
-        cell_width = 2 # width of FV grids 
+        cell_width = 1 # width of FV grids 
 
         for k in range(total_samples):
-            mid_x = 65.001 # heat pump x distance
-            mid_y = 65.001 # heat pump y distance
-            q_x_mid = self.dataset_tensor[k,0,33,33]
-            q_y_mid = self.dataset_tensor[k,1,33,33]
+            mid_x = 32.00 # heat pump x distance
+            mid_y = 32.00 # heat pump y distance
+            q_x_mid = self.dataset_tensor[k,0,32,32]
+            q_y_mid = self.dataset_tensor[k,1,32,32]
             plume_data[k,0,0] = q_x_mid
             plume_data[k,0,1] = q_y_mid
-            plume_data[k,0,2] = self.dataset_tensor[k,2,33,33]
-            locations_plume[k,0,0] = 65.001
-            locations_plume[k,0,1] = 65.001
+            plume_data[k,0,2] = self.dataset_tensor[k,2,32,32]
+            locations_plume[k,0,0] = 32.00
+            locations_plume[k,0,1] = 32.00
 
             # Length of velocity vector
             vec_length = math.sqrt(q_x_mid**2 + q_y_mid**2 ) 
@@ -237,10 +160,10 @@ class MultiFolderDataset(Dataset):
             scaling_vec = scaling_length_l/vec_length
             scaling_vec_w = scaling_length_w/vec_length
 
-            q_x_scaled = q_x_mid*scaling_vec
-            q_y_scaled = q_y_mid*scaling_vec
-            q_x_scaled_w = q_x_mid*scaling_vec_w
-            q_y_scaled_w = q_y_mid*scaling_vec_w
+            q_x_scaled = q_x_mid*abs(scaling_vec)
+            q_y_scaled = q_y_mid*abs(scaling_vec)
+            q_x_scaled_w = q_x_mid*abs(scaling_vec_w)
+            q_y_scaled_w = q_y_mid*abs(scaling_vec_w)
             
             for w in range(width):
                 loc_off_plume_x[k,0,w] = locations_plume[k,0,0] - ((mid_width-w)*q_y_scaled_w)
@@ -263,10 +186,10 @@ class MultiFolderDataset(Dataset):
                 vec_length = math.sqrt(plume_data[k,i,0]**2 + plume_data[k,i,1]**2 ) 
                 scaling_vec = scaling_length_l/vec_length
                 scaling_vec_w = scaling_length_w/vec_length
-                q_x_scaled = plume_data[k,i,0]*scaling_vec
-                q_y_scaled = plume_data[k,i,1]*scaling_vec
-                q_x_scaled_w = plume_data[k,i,0]*scaling_vec_w
-                q_y_scaled_w = plume_data[k,i,1]*scaling_vec_w
+                q_x_scaled = plume_data[k,i,0]*abs(scaling_vec)
+                q_y_scaled = plume_data[k,i,1]*abs(scaling_vec)
+                q_x_scaled_w = plume_data[k,i,0]*abs(scaling_vec_w)
+                q_y_scaled_w = plume_data[k,i,1]*abs(scaling_vec_w)
 
                 for w in range(width):
                     loc_off_plume_x[k,i,w] = locations_plume[k,i,0] - ((mid_width-w)*q_y_scaled_w)
@@ -303,26 +226,12 @@ class MultiFolderDataset(Dataset):
         #print(mid_x,mid_y)
         #print(lower_x_bound,upper_x_bound)
         #print(lower_y_bound,upper_y_bound)
-        xGrid = np.arange(1, 131, 2)
-        yGrid = np.arange(1, 131, 2)
+        xGrid = np.arange(0, 65, 1)
+        yGrid = np.arange(0, 65, 1)
         for j in range(3):
             result = self.dataset_tensor[k,j,:,:].flatten()
-            f = interpolate.interp2d(xGrid, yGrid, result, kind='linear')
-            vA[j] = f(mid_x,mid_y)
-            #v1 = self.dataset_tensor[k,j,lower_x_bound,lower_y_bound]
-            #v2 = self.dataset_tensor[k,j,upper_x_bound,lower_y_bound]
-            #v3 = self.dataset_tensor[k,j,upper_x_bound,upper_y_bound]
-            #v4 = self.dataset_tensor[k,j,lower_x_bound,upper_y_bound]
-            
-            #print("Ratio: ", (upper_x_bound*cell_width - 1) - mid_x, " - and: ",  mid_x - (lower_x_bound*cell_width - 1))
-            #v12 = v1*(((upper_x_bound*cell_width - 1) - mid_x)/(cell_width)) + v2*((mid_x - (lower_x_bound*cell_width - 1))/(cell_width))
-
-            #v34 = v3*((upper_x_bound*cell_width - 1) - mid_x)/((cell_width)) + v4*((mid_x - (lower_x_bound*cell_width - 1))/(cell_width))
-
-            #vA[j] = v12*(((upper_y_bound*cell_width - 1) - mid_y)/(cell_width)) + v34*((mid_y - (lower_y_bound*cell_width - 1))/(cell_width)) 
-            #print(v1, v2, v3, v4, vA[j])
-
-            #print(vA[j])
+            f = interpolate.interp2d(xGrid, yGrid, result, kind='cubic')
+            vA[j] = f(mid_y,mid_x)
 
         return vA
         

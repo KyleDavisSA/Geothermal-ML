@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from data import MultiFolderDataset
+from data_fc import MultiFolderDataset
 from random import randint
 import seaborn as sns
 from cycler import cycler

@@ -79,16 +79,12 @@ train_size = int(len(mf_dataset))
 test_size = int(len(mf_dataset_test))
 
 temperature, Vmax, loc_off_plume_x, loc_off_plume_y = train_dataset.extract_plume_data()
-#print(f"{temperature[0,0,:]}")
-#print(f"{temperature[0,1,:]}")
-#print(f"{temperature[0,2,:]}")
-print(f"{temperature[0,:,:]}")
-print(f"{temperature[1,:,:]}")
 
 for i in range(10):
     H = temperature[i,:,:]
     plt.imshow(H, interpolation='none',cmap='jet')
     plt.show()
+
 
 exit()
 
