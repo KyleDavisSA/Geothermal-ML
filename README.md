@@ -2,17 +2,18 @@
 
 ## Download
 
-This folder contains all python files and data to train a convolutional neural network to predict the temperature profile due to the presence of a groundwater heat pump. The idea for the temperature plume prediction is provided here: https://arxiv.org/pdf/2203.14961.pdf. 
+This folder contains all python files to gather the temperature data along the streamline of the thermal plume that runs throught the heat pump.  
 
 ## Data
 
-Please see the data repository here: https://doi.org/10.18419/darus-3184.
-All data necessary for training the networks are provided in "data.tar.gz". This is divided into 32 batches of 25 samples each. Unzip the file to access the data.
+Please see the data repository here: https://doi.org/10.18419/darus-3184. 
+All data necessary for training the networks are provided in "data.tar.gz". This is divided into 32 batches of 25 samples each. Unzip the file to access the folder `data`.
 
 ## Setup
 
-The first step in reproducing the results is to set the source code path and data path in "train.yml". Various other parameters are adjusted in the train.yml file:
+Add the folder `data` form above into this projects home directory. Next, set the source code path and data path in "train.yml". Various other parameters are adjusted in the train.yml file:
 
+Note: Some of the parameters below are for training a convolutional neural network and are not required for data sampling. 
 data_augmentation: if set to True, then the images are randomly rotated to generate more training samples.
 n_epochs: total number of training epochs.
 lr: sets the learning rate.
@@ -26,17 +27,15 @@ total_batch_groups: the total number of sample groups used for training can be s
 base_path: path to source code
 data_path: path to data where the batch folders are stored
 
-Each convolutional neural network type can be trained using the three scripts provided: train_model_TurbNetGeo.py, train_model_TurbNetGeo_Light.py and train_model_TurbNetGeo_NoSkip_Light.py. Simply run one of the python scripts via
+
+## Run
+
+Extracting the data along the thermal plume is done by running:
 ```
-python3 train_model_TurbNetGeo.py
+python3 train_model_fc.py
 ```
+Note that if more than 5 batches are set in the `train.yaml` file, then the folders `5, 10, 15, 20, 25, 30` will be seperated into a testing list. Extracting the testing data has not been implemented yet. 
 
-This will load the training and testing data and begin training the network according to the specifications in `train.yml`. The test samples that are excluded from the training data are batchs: 5, 10, 15, 20, 25 and 30. All other batches were used for training. This is hard-coded in the provided model files. 
-
-## Results 
-
-Results for three network architectures trained over 50,000 epochs are provided in "Results.tar.gz". After unzipping the file, within are the folder "Results/TNG", "Results/TNG-L" and "Results/TNG-NS-L". Each are further divided based on the channelExponent value. Each training results folder contains the `train.yml` file used for training. 
-The models can be loaded into tensorboard (https://www.tensorflow.org/tensorboard/), where the visualisation output for all testing samples can be viewed under the "images" heading. 
 
 ## Software Dependency
 
