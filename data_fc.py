@@ -108,7 +108,7 @@ class MultiFolderDataset(Dataset):
                 starting_point = np.array([[32,32]])    # Heat pump locations
                 plt.streamplot(X, Y, u, v, density=density, start_points=starting_point)
 
-                cp = plt.contourf(X, Y, Temp, levels=5)
+                cp = plt.contourf(X, Y, Temp, levels=[11,12,13,14],cmap='viridis')
                 # Obtaining polgon coordinates of plumes 
                 # https://www.tutorialspoint.com/how-to-get-coordinates-from-the-contour-in-matplotlib
                 for item in cp.collections:
