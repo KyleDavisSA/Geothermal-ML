@@ -3,8 +3,7 @@ import os
 from torchvision.transforms.functional import InterpolationMode
 from torchvision.transforms.transforms import CenterCrop
 from data import MultiFolderDataset
-from unet_test import TurbNetG, TurbNetG_Light, UNet, weights_init, TurbNetG_noCat_Light
-from models import DenseED
+from unet import TurbNetG, TurbNetG_Light, weights_init, TurbNetG_noSkip_Light
 from torch import optim
 from torch.utils.data import DataLoader, random_split
 from torch.nn import MSELoss, L1Loss
