@@ -14,4 +14,4 @@ length_scaling: 1
 width_scaling: 1
 base_path: /home/daviske/Research/Darus/geothermal-ml
 data_path: /home/daviske/Research/Darus/geothermal-ml/data
-view_image: False
+view_image: True
