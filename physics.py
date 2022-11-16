@@ -5,6 +5,14 @@ from torch.nn.modules.utils import _quadruple
 
 from data import CacheDataset
 
+'''
+Many functions in this file were obtained from:
+https://github.com/cics-nd/pde-surrogate/tree/master/utils
+
+Provided under the MIT license:
+https://github.com/cics-nd/pde-surrogate/blob/master/LICENSE
+
+'''
 
 class SobelFilter(object):
     def __init__(self, imsize, correct=True, device="cpu"):

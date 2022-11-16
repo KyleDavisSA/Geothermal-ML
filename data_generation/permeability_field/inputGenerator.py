@@ -2,6 +2,9 @@
 import os
 import matplotlib.pyplot as plt
 import random
+import contextlib
+
+from initial_gauss_perm_creator import generate_perm_field
 
 
 class Region(object):
@@ -336,8 +339,12 @@ p3 = []
 
 skip = 1
 
-nRunsStart = 1
-nRunsEnd = 4
+nRunsStart = 0
+nRunsEnd = 32
+
+with_and_without_flow = False
+# output_folder = "/import/sgs.scratch/leiterrl/Geothermal-ML/PFLOTRAN-Data/large"
+output_folder = "results"
 
 i = 0
 # Generate random points for pressure field boundary condition
@@ -366,11 +373,17 @@ massFlow = 0
 bcCounter = -1
 for i in range(nRunsStart, nRunsEnd):
     bcCounter += 1
-    os.remove("permeability.h5")
-    os.system("python3 initial_gauss_perm_creator.py")
+    with contextlib.suppress(FileNotFoundError):
+        os.remove("permeability.h5")
+
+    # os.system("python3 initial_gauss_perm_creator.py")
+    generate_perm_field()
     if i >= nRunsStart:
         # Need to run 1 simulation without GWHP flow and 1 with flow
-        for j in range(0, 2):
+        start_j = 0
+        if not with_and_without_flow:
+            start_j = 1
+        for j in range(start_j, 2):
             print("Running Simulation J: ", j, " - With Inputs: ", i)
             print("bcCounter: ", bcCounter)
             if j == 0:
@@ -398,15 +411,15 @@ for i in range(nRunsStart, nRunsEnd):
             os.system("mpirun -n 4 pflotran pflotran.in > log.pflotran")
             # input()
             if j == 0:
-                os.system("cp pflotran.in results/pflotran-noFlow-" + str(i) + ".in")
-                os.system("cp pflotran-004.vtk results/pflotran-noFlow-" + str(i) + ".vtk")
-                os.system("cp pflotran-vel-004.vtk results/pflotran-noFlow-vel-" + str(i) + ".vtk")
+                os.system(f"cp pflotran.in {output_folder}/pflotran-noFlow-{i}.in")
+                os.system(f"cp pflotran-004.vtk {output_folder}/pflotran-noFlow-{i}.vtk")
+                os.system(f"cp pflotran-vel-004.vtk {output_folder}/pflotran-noFlow-vel-{i}.vtk")
                 with open("cell.dat", "r") as f1, open(
-                    "results/pflotran-noFlow-" + str(i) + ".vtk", "r"
-                ) as f2, open("results/pflotran-noFlow-vel-" + str(i) + ".vtk", "r") as f3, open(
-                    "results/pflotran-noFlow-new-" + str(i) + ".vtk", "w"
+                    f"{output_folder}/pflotran-noFlow-{i}.vtk", "r"
+                ) as f2, open(f"{output_folder}/pflotran-noFlow-vel-{i}.vtk", "r") as f3, open(
+                    f"{output_folder}/pflotran-noFlow-new-{i}.vtk", "w"
                 ) as newVTK, open(
-                    "results/pflotran-noFlow-new-vel-" + str(i) + ".vtk", "w"
+                    f"{output_folder}/pflotran-noFlow-new-vel-{i}.vtk", "w"
                 ) as newVEL:
                     # input2 = f.read()
                     lines1 = f1.readlines()
@@ -417,22 +430,24 @@ for i in range(nRunsStart, nRunsEnd):
                     newVEL.writelines(lines1[:])
                     newVEL.writelines(lines3[5:])
 
-                os.remove(f"results/pflotran-noFlow-{i}.vtk")
-                os.remove(f"results/pflotran-noFlow-vel-{i}.vtk")
-                os.remove(f"results/pflotran-withFlow-{i}.vtk")
-                os.remove(f"results/pflotran-withFlow-vel-{i}.vtk")
+                with contextlib.suppress(FileNotFoundError):
+                    os.remove(f"{output_folder}/pflotran-noFlow-{i}.vtk")
+                with contextlib.suppress(FileNotFoundError):
+                    os.remove(f"{output_folder}/pflotran-noFlow-vel-{i}.vtk")
+                with contextlib.suppress(FileNotFoundError):
+                    os.remove(f"{output_folder}/pflotran-withFlow-{i}.vtk")
+                with contextlib.suppress(FileNotFoundError):
+                    os.remove(f"{output_folder}/pflotran-withFlow-vel-{i}.vtk")
             else:
-                os.system("cp pflotran.in results/pflotran-withFlow-" + str(i) + ".in")
-                os.system("cp pflotran-004.vtk results/pflotran-withFlow-" + str(i) + ".vtk")
-                os.system(
-                    "cp pflotran-vel-004.vtk results/pflotran-withFlow-vel-" + str(i) + ".vtk"
-                )
+                os.system(f"cp pflotran.in {output_folder}/pflotran-withFlow-{i}.in")
+                os.system(f"cp pflotran-004.vtk {output_folder}/pflotran-withFlow-{i}.vtk")
+                os.system(f"cp pflotran-vel-004.vtk {output_folder}/pflotran-withFlow-vel-{i}.vtk")
                 with open("cell.dat", "r") as f1, open(
-                    "results/pflotran-withFlow-" + str(i) + ".vtk", "r"
-                ) as f2, open("results/pflotran-withFlow-vel-" + str(i) + ".vtk", "r") as f3, open(
-                    "results/pflotran-withFlow-new-" + str(i) + ".vtk", "w"
+                    f"{output_folder}/pflotran-withFlow-{i}.vtk", "r"
+                ) as f2, open(f"{output_folder}/pflotran-withFlow-vel-{i}.vtk", "r") as f3, open(
+                    f"{output_folder}/pflotran-withFlow-new-{i}.vtk", "w"
                 ) as newVTK, open(
-                    "results/pflotran-withFlow-new-vel-" + str(i) + ".vtk", "w"
+                    f"{output_folder}/pflotran-withFlow-new-vel-{i}.vtk", "w"
                 ) as newVEL:
                     # input2 = f.read()
                     lines1 = f1.readlines()
@@ -443,7 +458,11 @@ for i in range(nRunsStart, nRunsEnd):
                     newVEL.writelines(lines1[:])
                     newVEL.writelines(lines3[5:])
 
-                os.remove(f"results/pflotran-noFlow-{i}.vtk")
-                os.remove(f"results/pflotran-noFlow-vel-{i}.vtk")
-                os.remove(f"results/pflotran-withFlow-{i}.vtk")
-                os.remove(f"results/pflotran-withFlow-vel-{i}.vtk")
+                with contextlib.suppress(FileNotFoundError):
+                    os.remove(f"{output_folder}/pflotran-noFlow-{i}.vtk")
+                with contextlib.suppress(FileNotFoundError):
+                    os.remove(f"{output_folder}/pflotran-noFlow-vel-{i}.vtk")
+                with contextlib.suppress(FileNotFoundError):
+                    os.remove(f"{output_folder}/pflotran-withFlow-{i}.vtk")
+                with contextlib.suppress(FileNotFoundError):
+                    os.remove(f"{output_folder}/pflotran-withFlow-vel-{i}.vtk")
