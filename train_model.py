@@ -9,7 +9,6 @@ from data import (
     get_dataset_complete_cached,
     get_mid_perm_training_cached,
 )
-from physics import SobelFilter, constitutive_constraint
 from unet import TurbNetG, UNet, weights_init
 from torch import optim
 from torch.utils.data import DataLoader, random_split
@@ -195,7 +194,6 @@ def run_epoch(rank, world_size):
 
     loss_fn = MSELoss()
     # loss_fn = L1Loss()
-    sobel_filter = SobelFilter(imsize, correct=True, device=rank)
 
     postfix_dict = {
         "loss": "",
@@ -269,30 +267,22 @@ def run_epoch(rank, world_size):
                 optimizer.zero_grad()
                 output = model(input)
                 mse_loss = loss_fn(output, target)
-                res_loss = constitutive_constraint(input, output, sobel_filter)
 
                 optimizer.zero_grad()
                 mse_loss_grad = compute_loss_grads(model, mse_loss)
-                optimizer.zero_grad()
-                res_loss_grad = compute_loss_grads(model, res_loss)
+            
 
                 # TODO: this is bad to assume i guess...
                 first_loss_max_grad = torch.max(torch.abs(mse_loss_grad))
-                update = first_loss_max_grad / torch.mean(torch.abs(res_loss_grad))
-                res_loss_weight = (1.0 - lra_alpha) * res_loss_weight + lra_alpha * update
-                writer.add_scalar("res_weight", res_loss_weight, epoch)
-
+                res_loss_weight = (1.0 - lra_alpha) * res_loss_weight
+                
             model.zero_grad()
             optimizer.zero_grad()
 
             # with autocast("cuda"):
             output = model(input)
             mse_loss = loss_fn(output, target)
-            loss = mse_loss
-            if physical_loss:
-                res_loss = constitutive_constraint(input, output, sobel_filter, mf_dataset)
-                loss = mse_loss + res_loss_weight * res_loss
-
+            loss = mse_loss 
             loss.backward()
             # scaler.scale(loss).backward()
             optimizer.step()
