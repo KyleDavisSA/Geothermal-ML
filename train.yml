@@ -8,9 +8,9 @@ write_freq: 10000
 physical_loss: false
 imsize: 65
 total_batch_groups: 1
-width_plume: 15
-length_plume: 40
-length_scaling: 1
+width_plume: 25
+length_plume: 25
+length_scaling: 3
 width_scaling: 1
 base_path: /home/daviske/Research/Darus/geothermal-ml
 data_path: /home/daviske/Research/Darus/geothermal-ml/data

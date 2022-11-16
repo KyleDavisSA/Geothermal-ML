@@ -12,7 +12,7 @@ from torchvision.transforms.functional import InterpolationMode
 from torchvision.transforms.transforms import CenterCrop
 
 from data_fc import MultiFolderDataset
-from unet import TurbNetG_Light, weights_init, TurbNetG_noSkip_Light
+from unet import TurbNetG_Linear_Plume
 from tqdm import tqdm
 from datetime import datetime
 from plot import plot_multi_comparison
@@ -85,8 +85,13 @@ temperature_train, Vmax_train, qx_train, qy_train, loc_off_plume_x_train, loc_of
 
 if (view_image):
     for i in range(train_size):
-        H = temperature_train[i,:,:]
-        plt.imshow(H, interpolation='none',cmap='jet')
+        x = np.linspace(1, 25, 25)
+        y = np.linspace(1, 25, 25)
+        X, Y = np.meshgrid(x, y)
+        Temp = temperature_train[i,:,:]
+        cp = plt.contourf(X, Y, Temp, levels=[11,12,13,14,15],cmap='viridis')
+        plt.colorbar(cp)
+        #plt.imshow(H, interpolation='none',cmap='jet')
         plt.show()
 
 if (test_size > 0):

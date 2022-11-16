@@ -97,7 +97,7 @@ class MultiFolderDataset(Dataset):
         # -----------------------------------------------------------------------------------------
         if (view_image):
             # To view the temperature field and velocity streamline through the heat pump location. 
-            for i in range(total_samples):
+            for i in range(5):
                 x = np.linspace(1, 65, 65)
                 y = np.linspace(1, 65, 65)
                 X, Y = np.meshgrid(x, y)
@@ -108,7 +108,7 @@ class MultiFolderDataset(Dataset):
                 starting_point = np.array([[32,32]])    # Heat pump locations
                 plt.streamplot(X, Y, u, v, density=density, start_points=starting_point)
 
-                cp = plt.contourf(X, Y, Temp, levels=[11,12,13,14],cmap='viridis')
+                cp = plt.contourf(X, Y, Temp, levels=[11,12,13,14,15],cmap='viridis')
                 # Obtaining polgon coordinates of plumes 
                 # https://www.tutorialspoint.com/how-to-get-coordinates-from-the-contour-in-matplotlib
                 for item in cp.collections:

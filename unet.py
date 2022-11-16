@@ -618,3 +618,68 @@ class TurbNetG_noSkip_Light(nn.Module):
         return dout1
 
 
+class TurbNetG_Linear_Plume(nn.Module):
+    def __init__(self, channelExponent=6, dropout=0.0):
+        super(TurbNetG_Linear_Plume, self).__init__()
+        channels = int(2**channelExponent + 0.5)
+        #print("Initial Features: ", channels)
+
+        self.layer1 = nn.Sequential()
+        self.layer1.add_module("layer1_conv", nn.Conv2d(2, channels, 4, 2, 1, bias=True))
+
+        self.layer2 = blockUNet(
+            channels,
+            channels * 2,
+            "layer2",
+            transposed=False,
+            bn=True,
+            relu=False,
+            dropout=dropout,
+        )
+        self.layer3 = blockUNet(
+            channels * 2,
+            channels * 4,
+            "layer3",
+            transposed=False,
+            bn=True,
+            relu=False,
+            dropout=dropout,
+        )
+        self.dlayer3 = blockUNet(
+            channels * 4,
+            channels * 2,
+            "dlayer3",
+            transposed=True,
+            bn=True,
+            relu=True,
+            dropout=dropout,
+        )
+        self.dlayer2 = blockUNet(
+            channels * 2,
+            channels,
+            "dlayer2",
+            transposed=True,
+            bn=True,
+            relu=True,
+            dropout=dropout,
+        )
+
+        self.dlayer1 = nn.Sequential()
+        self.dlayer1.add_module("dlayer1_relu", nn.ReLU(inplace=True))
+        self.dlayer1.add_module(
+            "dlayer1_tconv",
+            nn.ConvTranspose2d(channels, 1, 3, 2, 0, bias=True)
+            # nn.ConvTranspose2d(channels * 2, 1, 4, 2, 1, bias=True),
+        )
+
+    # @torch.autocast("cuda")
+    def forward(self, x):       
+        out1 = self.layer1(x)       
+        out2 = self.layer2(out1)       
+        out3 = self.layer3(out2)           
+        dout3 = self.dlayer3(out3)      
+        dout2 = self.dlayer2(dout3)
+        dout1 = self.dlayer1(dout2)
+        
+
+        return dout1

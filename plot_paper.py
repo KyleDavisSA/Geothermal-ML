@@ -10,8 +10,7 @@ from matplotlib import cm, colors
 
 from plot import plot_comparison, plot_comparison_plume, plot_comparison_small, plot_multi_comparison, plot_velocity_temperature_ax, plot_velocity_temperature_ax_inner
 
-from unet_test import TurbNetG, TurbNetG_noSkip_Light, TurbNetG_Light, TurbNetG_Light_small
-from models import DenseED
+from unet import TurbNetG, TurbNetG_noSkip_Light, TurbNetG_Light
 
 cm = 1 / 2.54  # centimeters in inches
 width_cm = 17
