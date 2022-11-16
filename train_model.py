@@ -11,7 +11,6 @@ from data import (
 )
 from physics import SobelFilter, constitutive_constraint
 from unet import TurbNetG, UNet, weights_init
-from models import DenseED
 from torch import optim
 from torch.utils.data import DataLoader, random_split
 from torch.nn import MSELoss, L1Loss

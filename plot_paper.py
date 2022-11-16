@@ -13,7 +13,7 @@ from data import (
     get_mid_perm_test_cached,
 )
 from plot import plot_comparison, plot_comparison_plume
-from plot_plume import get_contour_data
+#from plot_plume import get_contour_data
 from unet import TurbNetG
 
 

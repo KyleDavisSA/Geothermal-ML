@@ -13,7 +13,7 @@ from torch.utils.tensorboard.writer import SummaryWriter
 from tqdm import tqdm
 
 from data import SVDDataset
-from models import GWHPSVDEncodeDecode, GWHPSVDEncodeDecodeLinear, GWHPSVDModel
+from models import GWHPSVDEncodeDecode
 from plot import plot_comparison, plot_multi_input_comparison
 from unet import weights_init
 from utils import cleanup, run_parallel, setup
